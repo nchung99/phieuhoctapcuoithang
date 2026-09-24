@@ -15,8 +15,7 @@
   <div class="top-actions">
     <label class="btn primary">Nhập JSON<input id="jsonFile" type="file" accept=".json,application/json" multiple hidden></label>
     <button class="btn" id="aiBtn" disabled>Tạo nhận xét AI</button>
-    <button class="btn secondary" id="editBtn" disabled>✏️ Chỉnh sửa</button>
-    <button class="btn" id="printBtn" disabled>ZIP PDF</button>
+    <button class="btn" id="printBtn" disabled>Tải ZIP PDF</button>
     <div id="failedBatchBox" class="failed-batch-box" hidden></div>
   </div>
 </header>
@@ -24,7 +23,7 @@
 <main class="workspace">
   <aside class="panel">
     <section>
-      <h3>Thông tin chung</h3>
+      <div class="panel-title-row"><h3>Thông tin chung</h3><button id="editBtn" class="mini-edit" type="button" disabled>✏️ Edit</button></div>
       <label>Giáo viên
         <select id="teacher">
           <option value="">Chọn giáo viên</option>
@@ -133,13 +132,17 @@
     </table>
   </section>
 
+  <div class="footer">copyright by Synd</div>
 </article>
   </section>
 </main>
 <script src="script.js"></script>
-<div id="editModal" class="edit-modal" hidden><div class="edit-dialog">
-<div class="edit-head"><h2>Chỉnh sửa dữ liệu phiếu</h2><button id="editClose" type="button">×</button></div>
-<div id="editForm" class="edit-form"></div><div class="edit-actions"><button class="btn secondary" id="editCancel" type="button">Hủy</button><button class="btn" id="editSave" type="button">Lưu thay đổi</button></div>
-</div></div>
+<div id="editModal" class="edit-modal" hidden>
+ <div class="edit-dialog">
+  <div class="edit-head"><h2>Chỉnh sửa dữ liệu</h2><button id="editClose" type="button">×</button></div>
+  <div id="editForm" class="edit-form"></div>
+  <div class="edit-actions"><button id="editCancel" class="btn" type="button">Hủy</button><button id="editSave" class="btn primary" type="button">Lưu</button></div>
+ </div>
+</div>
 </body>
 </html>

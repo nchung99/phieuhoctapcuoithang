@@ -28,7 +28,9 @@ async function gemini(key,prompt){
    });
    const j=await r.json();
    if(!r.ok)throw Error(`${model}: ${j?.error?.message||"lỗi API"}`);
-   let t=j?.candidates?.[0]?.content?.parts?.map(x=>x.text||"").join("")||"";t=t.replace(/^```json\s*/i,"").replace(/```$/,"").trim();try{return {data:JSON.parse(t),model}}catch(_){throw Error(`${model}: phản hồi không phải JSON — ${t.slice(0,120)}`)}
+   let t=j?.candidates?.[0]?.content?.parts?.map(x=>x.text||"").join("")||"";
+   t=t.replace(/^```json\s*/i,"").replace(/```$/,"").trim();
+   return {data:JSON.parse(t),model};
   }catch(e){last=e.message}
  }
  throw Error(last||"Gemini lỗi");
@@ -152,9 +154,7 @@ export default async function handler(req,res){
  }
 
  const completed=Object.keys(students).length;
-
-
- // Trả partial success để client lưu được các batch đã xong.
+ // Luôn trả JSON có failed[] để client dựng nút Retry, kể cả 0 học viên thành công.
  return res.status(200).json({
   students,
   completed,

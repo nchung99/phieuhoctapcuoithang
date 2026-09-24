@@ -809,6 +809,9 @@
 .retry-batch-btn:hover{background:#fff1f0}
 .retry-batch-btn:disabled{opacity:.55;cursor:wait}
 
-.edit-modal{position:fixed;inset:0;background:#0007;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}.edit-modal[hidden]{display:none!important}
-.edit-dialog{background:#fff;width:min(900px,96vw);max-height:90vh;overflow:auto;border-radius:16px;padding:22px}.edit-head{display:flex;justify-content:space-between;align-items:center}.edit-head h2{margin:0}.edit-head button{border:0;background:none;font-size:30px;cursor:pointer}
-.edit-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}.ef{display:flex;flex-direction:column;gap:5px}.ef.full,.es{grid-column:1/-1}.ef label{font-weight:700;font-size:13px}.ef input,.ef textarea{border:1px solid #cbd5e1;border-radius:8px;padding:10px;font:inherit}.ef textarea{min-height:75px}.es{font-weight:800;border-top:1px solid #ddd;padding-top:12px;margin-top:6px}.edit-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.panel-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px}.panel-title-row h3{margin:0}
+.mini-edit{border:1px solid #c8102e;background:#fff;color:#c8102e;border-radius:8px;padding:6px 10px;font-weight:700;cursor:pointer}.mini-edit:disabled{opacity:.45;cursor:not-allowed}
+.edit-modal{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:9999;display:flex;align-items:center;justify-content:center;padding:18px}.edit-modal[hidden]{display:none!important}
+.edit-dialog{width:min(880px,96vw);max-height:90vh;overflow:auto;background:#fff;border-radius:16px;padding:20px}.edit-head{display:flex;align-items:center;justify-content:space-between}.edit-head h2{margin:0}.edit-head button{border:0;background:none;font-size:30px;cursor:pointer}
+.edit-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:15px}.edit-field{display:flex;flex-direction:column;gap:5px}.edit-field.full,.edit-section{grid-column:1/-1}.edit-field label{font-weight:700;font-size:13px}.edit-field input,.edit-field textarea{box-sizing:border-box;width:100%;border:1px solid #ccd5df;border-radius:8px;padding:9px 10px;font:inherit}.edit-field textarea{min-height:78px;resize:vertical}.edit-section{font-size:16px;font-weight:800;border-top:1px solid #e4e9ef;padding-top:12px;margin-top:5px}.edit-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+@media(max-width:700px){.edit-form{grid-template-columns:1fr}.edit-field.full,.edit-section{grid-column:1/-1}}
