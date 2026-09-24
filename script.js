@@ -403,7 +403,10 @@ async function retryFailedBatch(index,button){
      headers:{"Content-Type":"application/json"},
      body:JSON.stringify({data:retryData,subject:subjectOfData(d)})
    });
-   const out=await r.json();
+   const raw=await r.text();
+   let out;
+   try{out=JSON.parse(raw)}
+   catch(_){out={error:raw.slice(0,180)||`HTTP ${r.status}`,students:{},failed:[{batch:f.batch,names:f.names,error:raw.slice(0,180)||`HTTP ${r.status}`}]}};
    const k=f.classKey;
    if(out.students && Object.keys(out.students).length){
      CLASS_AI[k]={...(CLASS_AI[k]||{}),...out.students};
@@ -460,39 +463,35 @@ $("#aiBtn").onclick=async()=>{
          headers:{"Content-Type":"application/json"},
          body:JSON.stringify({data:d,subject:subjectOfData(d)})
        });
-       const out=await r.json();
-       if(!r.ok){
-         if(out.failed?.length){
-           for(const fb of out.failed){
-             FAILED_BATCHES.push({
-               classKey:k,
-               className:d.tenLop,
-               batch:fb.batch,
-               names:[...(fb.names||[])],
-               error:fb.error||out.error||"lỗi AI"
-             });
-           }
-           renderFailedBatches();
+       const raw=await r.text();
+       let out;
+       try{out=JSON.parse(raw)}
+       catch(_){
+         // Nếu Vercel/API trả text thay vì JSON, vẫn tạo retry theo batch 5 bé.
+         out={error:raw.slice(0,180)||`HTTP ${r.status}`,students:{},failed:[]};
+         const bs=[];
+         for(let i=0;i<d.hocVien.length;i+=5)bs.push(d.hocVien.slice(i,i+5));
+         out.failed=bs.map((b,i)=>({batch:i+1,names:b.map(s=>s.tenHocVien),error:out.error}));
+       }
+       CLASS_AI[k]={...(CLASS_AI[k]||{}),...(out.students||{})};
+       localStorage.setItem(`oiec_ai_${k}`,JSON.stringify(CLASS_AI[k]));
+       const newly=Object.keys(out.students||{}).length;
+       done+=newly;
+
+       if(out.failed?.length){
+         for(const fb of out.failed){
+           FAILED_BATCHES.push({
+             classKey:k,
+             className:d.tenLop,
+             batch:fb.batch,
+             names:[...(fb.names||[])],
+             error:fb.error||out.error||"lỗi AI"
+           });
          }
+         renderFailedBatches();
+         failed.push(`${d.tenLop}: ${newly}/${d.hocVien.length} học viên; ${out.failed.map(x=>x.error).join(" | ")}`);
+       }else if(!r.ok){
          failed.push(`${d.tenLop}: ${out.error||"lỗi AI"}`);
-       }else{
-         CLASS_AI[k]={...(CLASS_AI[k]||{}),...(out.students||{})};
-         localStorage.setItem(`oiec_ai_${k}`,JSON.stringify(CLASS_AI[k]));
-         const newly=Object.keys(out.students||{}).length;
-         done+=newly;
-         if(out.failed?.length){
-           for(const fb of out.failed){
-             FAILED_BATCHES.push({
-               classKey:k,
-               className:d.tenLop,
-               batch:fb.batch,
-               names:[...(fb.names||[])],
-               error:fb.error||"lỗi AI"
-             });
-           }
-           renderFailedBatches();
-           failed.push(`${d.tenLop}: ${newly}/${d.hocVien.length} học viên; ${out.failed.map(x=>x.error).join(" | ")}`);
-         }
        }
      }catch(e){
        failed.push(`${d.tenLop}: ${e.message}`);

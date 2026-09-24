@@ -133,3 +133,12 @@ v5.8 EDIT PANEL (base v5.7)
 - Lưu xong mới cập nhật preview/PDF.
 - Điểm tiêu chí + mức độ hoàn thiện vẫn chỉnh theo UI cũ.
 - Multi-worker, multi-model, retry đúng batch lỗi của v5.7 giữ nguyên.
+
+v5.8.1 RETRY FIX
+- Base v5.8 Edit Panel (bản này vốn base từ v5.7).
+- Fix trường hợp Gemini/Vercel trả text như "An error occurred..." làm JSON.parse lỗi.
+- API luôn trả failed[] với batch + danh sách học viên, kể cả 0 học viên thành công.
+- Batch lỗi không chặn batch sau.
+- Web luôn dựng nút Retry đúng batch lỗi.
+- Nếu tầng Vercel trả non-JSON, client vẫn tự chia danh sách lớp theo batch 5 để tạo nút Retry thay vì mất nút.
+- Retry chỉ gửi đúng học viên của batch đó.

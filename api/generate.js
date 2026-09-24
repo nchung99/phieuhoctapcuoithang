@@ -30,7 +30,12 @@ async function gemini(key,prompt){
    if(!r.ok)throw Error(`${model}: ${j?.error?.message||"lỗi API"}`);
    let t=j?.candidates?.[0]?.content?.parts?.map(x=>x.text||"").join("")||"";
    t=t.replace(/^```json\s*/i,"").replace(/```$/,"").trim();
-   return {data:JSON.parse(t),model};
+   try{
+    return {data:JSON.parse(t),model};
+   }catch(parseErr){
+    const preview=t.slice(0,140).replace(/\s+/g," ");
+    throw Error(`${model}: phản hồi không phải JSON${preview?` — ${preview}`:""}`);
+   }
   }catch(e){last=e.message}
  }
  throw Error(last||"Gemini lỗi");
@@ -154,13 +159,11 @@ export default async function handler(req,res){
  }
 
  const completed=Object.keys(students).length;
- if(!completed){
-  const msg=failed[0]?.error||"Không tạo được đánh giá AI.";
-  return res.status(429).json({error:msg,students:{},failed});
- }
-
- // Trả partial success để client lưu được các batch đã xong.
+ // Luôn trả JSON có failed[] kể cả 0 học viên thành công.
+ // Client cần metadata này để dựng nút Retry đúng batch lỗi.
  return res.status(200).json({
+  ok:failed.length===0,
+  error:failed.length ? (failed[0]?.error||"Có batch tạo AI bị lỗi.") : null,
   students,
   completed,
   total:data.hocVien.length,
