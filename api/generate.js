@@ -1,8 +1,18 @@
-const MODELS=["gemini-3.5-flash","gemini-3.5-flash-lite"];
+// Stable-first pool. Mỗi batch chọn model theo round-robin.
+// Nếu model được chọn lỗi/quota, batch đó tự thử các model còn lại.
+const MODELS=[
+ "gemini-3.5-flash-lite",
+ "gemini-3.1-flash-lite",
+ "gemini-3.5-flash",
+ "gemini-3.6-flash"
+];
+let modelCursor=0;
 
 async function gemini(key,prompt){
+ const start=(modelCursor++)%MODELS.length;
  let last="";
- for(const model of MODELS){
+ for(let step=0;step<MODELS.length;step++){
+  const model=MODELS[(start+step)%MODELS.length];
   try{
    const url=`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
    const r=await fetch(url,{
@@ -17,10 +27,10 @@ async function gemini(key,prompt){
     })
    });
    const j=await r.json();
-   if(!r.ok)throw Error(j?.error?.message||`${model} lỗi`);
+   if(!r.ok)throw Error(`${model}: ${j?.error?.message||"lỗi API"}`);
    let t=j?.candidates?.[0]?.content?.parts?.map(x=>x.text||"").join("")||"";
    t=t.replace(/^```json\s*/i,"").replace(/```$/,"").trim();
-   return JSON.parse(t);
+   return {data:JSON.parse(t),model};
   }catch(e){last=e.message}
  }
  throw Error(last||"Gemini lỗi");
@@ -93,7 +103,7 @@ async function generateBatch(key,common,students,subject){
  for(let attempt=0;attempt<2;attempt++){
   try{
    const result=await gemini(key,promptForBatch(common,students,subject));
-   const map=result?.students||{};
+   const map=result?.data?.students||{};
    for(const s of students){
     if(!map[s.tenHocVien]) throw Error(`AI thiếu kết quả của ${s.tenHocVien}`);
    }

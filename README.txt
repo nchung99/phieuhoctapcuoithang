@@ -99,3 +99,21 @@ v5.4.2
 - Giáo viên chỉnh tay: chọn tự do từ 1 đến 5.
 - Điểm chỉnh tay được lưu theo học viên/lớp và dùng khi xuất PDF.
 - Mã lớp vẫn dùng font dễ phân biệt số 0 và chữ O.
+
+v5.5 MULTI-WORKER
+- Generate AI nhiều lớp bằng worker pool tối đa 4 luồng song song.
+- Mỗi luồng nhận nguyên một lớp; server của lớp đó tiếp tục chia 5 học viên/batch và chạy tuần tự.
+- Không trộn học viên giữa các lớp.
+- Tất cả request vẫn dùng cùng GEMINI_API_KEY và cùng model/fallback; đây là nhiều request song song, không phải nhiều tài khoản Gemini.
+- Batch hoàn thành được lưu theo đúng classKey của lớp.
+
+v5.6 MULTI-MODEL WORKER
+- Giữ worker pool tối đa 4 lớp song song từ v5.5.
+- Mỗi lớp vẫn tách batch 5 học viên; tuyệt đối không trộn dữ liệu giữa lớp.
+- Mỗi batch phân phối round-robin qua 4 model stable:
+  gemini-3.5-flash-lite
+  gemini-3.1-flash-lite
+  gemini-3.5-flash
+  gemini-3.6-flash
+- Nếu model được chọn lỗi/quota, chính batch đó thử lần lượt các model còn lại.
+- Dùng chung GEMINI_API_KEY; không cần thêm key.

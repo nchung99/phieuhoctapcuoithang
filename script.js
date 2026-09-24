@@ -258,32 +258,75 @@ $("#aiBtn").onclick=async()=>{
  saveCurrentMeta();
  const btn=$("#aiBtn"),old=btn.textContent;
  btn.disabled=true;
- let done=0,total=CLASSES.reduce((n,d)=>n+d.hocVien.length,0),failed=[];
- try{
-  for(let ci=0;ci<CLASSES.length;ci++){
-   const d=CLASSES[ci],k=classKey(d);
-   DATA=d;
-   btn.textContent=`AI ${ci+1}/${CLASSES.length} lớp • ${done}/${total} học viên...`;
-   const r=await fetch("/api/generate",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({data:d,subject:subject()})
-   });
-   const out=await r.json();
-   if(!r.ok){failed.push(`${d.tenLop}: ${out.error||"lỗi AI"}`);continue}
-   CLASS_AI[k]={...(CLASS_AI[k]||{}),...(out.students||{})};
-   localStorage.setItem(`oiec_ai_${k}`,JSON.stringify(CLASS_AI[k]));
-   const newly=Object.keys(out.students||{}).length;
-   done+=newly;
-   if(out.failed?.length){
-     failed.push(`${d.tenLop}: ${newly}/${d.hocVien.length} học viên; ${out.failed.map(x=>x.error).join(" | ")}`);
+
+ // Worker pool theo LỚP:
+ // Mỗi worker nhận trọn 1 lớp; API của lớp đó tự chạy nhiều batch 5 học viên.
+ // Vì vậy dữ liệu học viên giữa các lớp không bị trộn.
+ const WORKERS=Math.min(4,CLASSES.length);
+ let nextClass=0,done=0,finishedClasses=0;
+ const total=CLASSES.reduce((n,d)=>n+d.hocVien.length,0);
+ const failed=[];
+
+ const subjectOf=(d)=>{
+   const lessons=(d?.noiDungThang||[]);
+   const activity=lessons.map(x=>x.tenBuoiHoc||"").join(" ");
+   const content=lessons.map(x=>`${x.tenBaiHoc||""} ${x.noiDungBaiHoc||""}`).join(" ");
+   if(/ROBOTIC/i.test(activity))return "Robotics";
+   if(/CODING/i.test(activity))return "Coding";
+   if(/LEGO|Spike|robot|cảm biến|động cơ|lắp ráp/i.test(content))return "Robotics";
+   if(/Scratch|lập trình|tọa độ|khối lệnh|key pressed|nhân vật/i.test(content))return "Coding";
+   return "Coding / Robotics";
+ };
+
+ const updateProgress=()=>{
+   btn.textContent=`AI ${finishedClasses}/${CLASSES.length} lớp • ${done}/${total} học viên • ${WORKERS} luồng`;
+ };
+
+ async function worker(){
+   while(true){
+     const ci=nextClass++;
+     if(ci>=CLASSES.length)return;
+     const d=CLASSES[ci],k=classKey(d);
+     try{
+       const r=await fetch("/api/generate",{
+         method:"POST",
+         headers:{"Content-Type":"application/json"},
+         body:JSON.stringify({data:d,subject:subjectOf(d)})
+       });
+       const out=await r.json();
+       if(!r.ok){
+         failed.push(`${d.tenLop}: ${out.error||"lỗi AI"}`);
+       }else{
+         CLASS_AI[k]={...(CLASS_AI[k]||{}),...(out.students||{})};
+         localStorage.setItem(`oiec_ai_${k}`,JSON.stringify(CLASS_AI[k]));
+         const newly=Object.keys(out.students||{}).length;
+         done+=newly;
+         if(out.failed?.length){
+           failed.push(`${d.tenLop}: ${newly}/${d.hocVien.length} học viên; ${out.failed.map(x=>x.error).join(" | ")}`);
+         }
+       }
+     }catch(e){
+       failed.push(`${d.tenLop}: ${e.message}`);
+     }finally{
+       finishedClasses++;
+       updateProgress();
+     }
    }
-  }
-  currentClassKey=$("#classSelect").value;
-  syncCurrentClass();
-  if(failed.length) alert(`Đã tạo AI ${done}/${total} học viên.\n\nLớp lỗi:\n${failed.join("\n")}`);
-  else alert(`Đã tạo AI xong ${CLASSES.length} lớp • ${done}/${total} học viên.`);
- }catch(e){alert("Generate AI lỗi: "+e.message)}
- finally{btn.disabled=false;btn.textContent=old}
+ }
+
+ try{
+   updateProgress();
+   await Promise.all(Array.from({length:WORKERS},()=>worker()));
+   currentClassKey=$("#classSelect").value;
+   syncCurrentClass();
+   if(failed.length)alert(`Đã tạo AI ${done}/${total} học viên.\n\nLớp/batch lỗi:\n${failed.join("\n")}`);
+   else alert(`Đã tạo AI xong ${CLASSES.length} lớp • ${done}/${total} học viên • ${WORKERS} luồng.`);
+ }catch(e){
+   alert("Generate AI lỗi: "+e.message);
+ }finally{
+   btn.disabled=false;
+   btn.textContent=old;
+ }
 };
 
 function safeFileName(name){
