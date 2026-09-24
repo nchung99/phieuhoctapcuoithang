@@ -45,6 +45,7 @@ function syncCurrentClass(){
  renderStudent();
 }
 function subject(){
+ if(DATA?.__manualSubject)return DATA.__manualSubject;
  const lessons=(DATA?.noiDungThang||[]);
  const activity=lessons.map(x=>x.tenBuoiHoc||"").join(" ");
  const content=lessons.map(x=>`${x.tenBaiHoc||""} ${x.noiDungBaiHoc||""}`).join(" ");
@@ -94,7 +95,7 @@ function renderStudent(){
  $("#rClass").textContent=DATA.tenLop||"—";
  $("#rSubject").textContent=sub;
  $("#rMonth").textContent=DATA.thang||"—";
- $("#rDuration").textContent=`${DATA.soBuoi||4} buổi • 60 phút / buổi`;
+ $("#rDuration").textContent=DATA.__manualDuration||`${DATA.soBuoi||4} buổi • 60 phút / buổi`;
  $("#skillHeading").textContent=sub==="Coding"?"Kỹ năng lập trình":sub==="Robotics"?"Kỹ năng Robotics":"Kỹ năng theo bộ môn";
 
  const lessons=DATA.noiDungThang||[];
@@ -250,9 +251,113 @@ $("#jsonFile").onchange=async e=>{
 };
 
 
+
+function editEsc(v){return String(v??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function editField(label,name,value,full=false,area=false){
+ return `<div class="edit-group ${full?"full":""}"><label>${label}</label>${area
+   ?`<textarea name="${name}">${String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</textarea>`
+   :`<input name="${name}" value="${editEsc(value)}">`}</div>`;
+}
+function openEditPanel(){
+ if(!DATA||!current)return;
+ const student=DATA.hocVien.find(x=>x.tenHocVien===current);
+ const a={...(AI[current]||{}),...(MANUAL[currentClassKey]?.[current]||{})};
+ const pro=a.chuyenMon||[];
+ let out=`<div class="edit-section">Thông tin chung</div>`;
+ out+=editField("Tên học viên","studentName",current);
+ out+=editField("Lớp","className",DATA.tenLop);
+ out+=editField("Giáo viên","teacher",selectedTeacher());
+ out+=editField("Center","center",selectedCenter());
+ out+=editField("Bộ môn","subject",subject());
+ out+=editField("Tháng đánh giá","month",DATA.thang);
+ out+=editField("Thời lượng","duration",DATA.__manualDuration||`${DATA.soBuoi||4} buổi • 60 phút / buổi`,true);
+
+ out+=`<div class="edit-section">Nội dung học trong tháng</div>`;
+ (DATA.noiDungThang||[]).forEach((x,i)=>{
+   out+=editField(`Tuần ${i+1} - Ngày học`,`lessonDate_${i}`,x.ngayHoc);
+   out+=editField(`Tuần ${i+1} - Tên bài`,`lessonTitle_${i}`,x.tenBaiHoc);
+   out+=editField(`Tuần ${i+1} - Nội dung`,`lessonContent_${i}`,x.noiDungBaiHoc,true,true);
+ });
+
+ out+=`<div class="edit-section">Đánh giá chuyên môn</div>`;
+ const labels=["Tư duy Logic trong lập trình","Phân tích & xử lý vấn đề","Khả năng sáng tạo","Tiếp thu kiến thức & ghi nhớ","Khả năng làm việc nhóm"];
+ labels.forEach((x,i)=>out+=editField(x,`pro_${i}`,pro[i]||"",true,true));
+
+ out+=`<div class="edit-section">Năng lực & sản phẩm</div>`;
+ out+=editField("Kiến thức - Lập trình","knowledge",a.kienThucLapTrinh||"",true,true);
+ out+=editField(subject()==="Coding"?"Kỹ năng lập trình":"Kỹ năng Robotics","skill",a.kyNangRobotics||"",true,true);
+ out+=editField("Sản phẩm / Dự án","project",a.sanPhamDuAn||"",true,true);
+
+ $("#editForm").innerHTML=out;
+ $("#editModal").hidden=false;
+}
+function closeEditPanel(){ $("#editModal").hidden=true; }
+
+function renameStudentForEdit(oldName,newName){
+ newName=(newName||"").trim();
+ if(!newName||newName===oldName)return oldName;
+ if(DATA.hocVien.some(s=>s.tenHocVien===newName)){alert("Tên học viên này đã tồn tại trong lớp.");return oldName}
+ const st=DATA.hocVien.find(s=>s.tenHocVien===oldName);
+ if(!st)return oldName;
+ st.tenHocVien=newName;
+ if(AI[oldName]){AI[newName]=AI[oldName];delete AI[oldName]}
+ if(MANUAL[currentClassKey]?.[oldName]){
+   MANUAL[currentClassKey][newName]=MANUAL[currentClassKey][oldName];
+   delete MANUAL[currentClassKey][oldName];
+ }
+ current=newName;
+ return newName;
+}
+function saveEditPanel(){
+ const fd=new FormData($("#editForm"));
+ const oldName=current;
+ const newName=renameStudentForEdit(oldName,fd.get("studentName"));
+ DATA.tenLop=String(fd.get("className")||DATA.tenLop).trim();
+ DATA.thang=String(fd.get("month")||DATA.thang).trim();
+ DATA.__manualSubject=String(fd.get("subject")||"").trim();
+ DATA.__manualDuration=String(fd.get("duration")||"").trim();
+
+ const teacher=String(fd.get("teacher")||"").trim(),center=String(fd.get("center")||"").trim();
+ CLASS_META[currentClassKey]??={};
+ CLASS_META[currentClassKey].teacher=teacher;CLASS_META[currentClassKey].center=center;
+ addOption($("#teacher"),teacher);addOption($("#center"),center);
+ $("#teacher").value=teacher;$("#center").value=center;
+ localStorage.setItem(`oiec_teacher_${currentClassKey}`,teacher);
+ localStorage.setItem(`oiec_center_${currentClassKey}`,center);
+
+ (DATA.noiDungThang||[]).forEach((x,i)=>{
+   x.ngayHoc=String(fd.get(`lessonDate_${i}`)||"").trim();
+   x.tenBaiHoc=String(fd.get(`lessonTitle_${i}`)||"").trim();
+   x.noiDungBaiHoc=String(fd.get(`lessonContent_${i}`)||"").trim();
+ });
+
+ MANUAL[currentClassKey]??={};
+ const m=MANUAL[currentClassKey][newName]??={};
+ m.chuyenMon=[0,1,2,3,4].map(i=>String(fd.get(`pro_${i}`)||"").trim());
+ m.kienThucLapTrinh=String(fd.get("knowledge")||"").trim();
+ m.kyNangRobotics=String(fd.get("skill")||"").trim();
+ m.sanPhamDuAn=String(fd.get("project")||"").trim();
+ saveManual();
+ localStorage.setItem(`oiec_ai_${currentClassKey}`,JSON.stringify(AI));
+
+ const classOpt=[...$("#classSelect").options].find(o=>o.value===currentClassKey);
+ if(classOpt)classOpt.textContent=`${DATA.tenLop} • ${DATA.thang}`;
+ $("#studentSelect").innerHTML=DATA.hocVien.map(s=>`<option>${esc(s.tenHocVien)}</option>`).join("");
+ $("#studentSelect").value=current;
+ $("#classInfo").textContent=DATA.tenLop;$("#monthInfo").textContent=DATA.thang;$("#subjectInfo").textContent=subject();
+ closeEditPanel();renderStudent();
+}
+
+$("#editBtn").onclick=openEditPanel;
+$("#editClose").onclick=closeEditPanel;
+$("#editCancel").onclick=closeEditPanel;
+$("#editSave").onclick=saveEditPanel;
+$("#editModal").addEventListener("click",e=>{if(e.target===$("#editModal"))closeEditPanel()});
+
 let FAILED_BATCHES=[];
 
 function subjectOfData(d){
+ if(d?.__manualSubject)return d.__manualSubject;
  const lessons=(d?.noiDungThang||[]);
  const activity=lessons.map(x=>x.tenBuoiHoc||"").join(" ");
  const content=lessons.map(x=>`${x.tenBaiHoc||""} ${x.noiDungBaiHoc||""}`).join(" ");

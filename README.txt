@@ -124,3 +124,12 @@ v5.7 RETRY FAILED BATCH
 - Retry chỉ gửi lại đúng danh sách học viên của batch lỗi (tối đa 5), không chạy lại batch đã thành công.
 - Kết quả retry merge về đúng classKey và lưu localStorage.
 - Multi-worker + multi-model của v5.6 giữ nguyên.
+
+v5.8 EDIT PANEL (base v5.7)
+- Phiếu giữ nguyên, không có contenteditable trực tiếp.
+- Thêm nút "Chỉnh sửa" để mở panel khi cần.
+- Panel sửa: học viên, lớp, giáo viên, center, bộ môn, tháng, thời lượng, 4 buổi học,
+  5 dòng chuyên môn, 3 nội dung năng lực/sản phẩm.
+- Lưu xong mới cập nhật preview/PDF.
+- Điểm tiêu chí + mức độ hoàn thiện vẫn chỉnh theo UI cũ.
+- Multi-worker, multi-model, retry đúng batch lỗi của v5.7 giữ nguyên.
