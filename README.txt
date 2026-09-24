@@ -34,3 +34,19 @@ v5.0:
 - Thu gọn header, khoảng cách section, ô thông tin, 4 tuần, đánh giá chuyên môn,
   bảng năng lực và bảng tiêu chí để PDF vừa đúng 1 trang A4.
 - API PDF dùng kích thước chính xác 210x297mm và printBackground.
+
+v5.1 MULTI-CLASS
+- Nhập nhiều file JSON cùng lúc.
+- Có dropdown Lớp + Học viên.
+- Generate AI toàn bộ các lớp; trong mỗi lớp chạy tối đa 4 học viên song song.
+- Mỗi học viên lỗi được retry 1 lần.
+- ZIP tách riêng từng lớp.
+- Tên ZIP = mã lớp (ví dụ KP09.zip).
+- PDF bên trong vẫn = họ tên học viên (ví dụ Nguyễn Công Hưng.pdf).
+
+v5.1.1 BALANCED LAYOUT
+- Giữ PDF đúng 1 trang A4.
+- Nới lại line-height, chiều cao ô và khoảng cách section.
+- Header lớn hơn v5.0 một chút nhưng vẫn gọn.
+- Bảng tiêu chí không còn dồn sát.
+- Footer neo xuống đáy, tổng thể phân bố đều hơn và giảm khoảng trắng lớn cuối trang.

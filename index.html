@@ -13,9 +13,9 @@
     <div>OIEC Monthly Report</div>
   </div>
   <div class="top-actions">
-    <label class="btn primary">Nhập JSON<input id="jsonFile" type="file" accept=".json,application/json" hidden></label>
-    <button class="btn" id="aiBtn" disabled>GEN AI</button>
-    <button class="btn" id="printBtn" disabled>ZIP PDF</button>
+    <label class="btn primary">Nhập JSON<input id="jsonFile" type="file" accept=".json,application/json" multiple hidden></label>
+    <button class="btn" id="aiBtn" disabled>Tạo nhận xét AI</button>
+    <button class="btn" id="printBtn" disabled>Tải ZIP PDF</button>
   </div>
 </header>
 
@@ -42,6 +42,7 @@
         </select>
         <input id="centerCustom" class="custom-input" placeholder="Nhập tên Center mới" style="display:none">
       </label>
+      <label>Lớp<select id="classSelect" disabled></select></label>
       <label>Học viên<select id="studentSelect" disabled></select></label>
     </section>
 
@@ -130,6 +131,7 @@
     </table>
   </section>
 
+  <div class="footer">copyright by Synd</div>
 </article>
   </section>
 </main>

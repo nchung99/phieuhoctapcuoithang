@@ -1,8 +1,43 @@
 const $=s=>document.querySelector(s);
 let DATA=null, AI={}, current=null;
+let CLASSES=[], CLASS_AI={}, CLASS_META={}, currentClassKey=null;
 const criteria=["Thái độ & tinh thần học tập","Kỹ năng hợp tác & giao tiếp","Kỹ năng thực hành & sáng tạo","Tính kiên trì & tự giác","Khả năng tiếp thu & vận dụng kiến thức","Tiến bộ cá nhân & đạo đức"];
 const scoreState={};
-function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function esc(s){return String(s??"").replace(/[&<>"\']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\'":"&#039;"}[m]))}
+
+function classKey(d){return `${d?.tenLop||"Lop"}__${d?.thang||""}`}
+function classCode(name){
+ const s=String(name||"LOP").trim();
+ const m=s.match(/\b([A-Za-z]{1,6}\d{1,4})\b/);
+ return safeFileName(m?m[1]:s.split(/\s*-\s*/)[0]||s);
+}
+function saveCurrentMeta(){
+ if(!currentClassKey)return;
+ CLASS_META[currentClassKey]={teacher:selectedTeacher(),center:selectedCenter()};
+}
+function loadClassMeta(){
+ const m=CLASS_META[currentClassKey]||{};
+ if(m.teacher){addOption($("#teacher"),m.teacher);$("#teacher").value=m.teacher}
+ if(m.center){addOption($("#center"),m.center);$("#center").value=m.center}
+}
+function syncCurrentClass(){
+ DATA=CLASSES.find(x=>classKey(x)===currentClassKey)||null;
+ AI=CLASS_AI[currentClassKey]||{};
+ if(!DATA)return;
+ const sel=$("#studentSelect");
+ sel.disabled=false;
+ sel.innerHTML=DATA.hocVien.map(x=>`<option>${esc(x.tenHocVien)}</option>`).join("");
+ current=DATA.hocVien[0]?.tenHocVien||null;
+ sel.value=current;
+ $("#classInfo").textContent=DATA.tenLop||"—";
+ $("#monthInfo").textContent=DATA.thang||"—";
+ $("#sessionsInfo").textContent=DATA.soBuoi||0;
+ $("#subjectInfo").textContent=subject();
+ $("#lessonList").classList.remove("empty");
+ $("#lessonList").innerHTML=(DATA.noiDungThang||[]).map(x=>`<div class="lesson-item"><b>${esc(x.ngayHoc)} • ${esc(x.tenBaiHoc)}</b>${esc(x.noiDungBaiHoc)}</div>`).join("");
+ loadClassMeta();
+ renderStudent();
+}
 function subject(){
  const lessons=(DATA?.noiDungThang||[]);
  const activity=lessons.map(x=>x.tenBuoiHoc||"").join(" ");
@@ -91,12 +126,12 @@ $("#teacher").onchange=()=>{
  const custom=$("#teacher").value==="__custom__";
  $("#teacherCustom").style.display=custom?"block":"none";
  if(!custom)localStorage.setItem("oiec_teacher",$("#teacher").value);
- renderStudent();
+ saveCurrentMeta(); renderStudent();
 };
 $("#teacherCustom").oninput=()=>{
  const v=$("#teacherCustom").value.trim();
  localStorage.setItem("oiec_teacher_custom",v);
- renderStudent();
+ saveCurrentMeta(); renderStudent();
 };
 $("#teacherCustom").onchange=()=>{
  const v=$("#teacherCustom").value.trim();
@@ -107,12 +142,12 @@ $("#center").onchange=()=>{
  const custom=$("#center").value==="__custom__";
  $("#centerCustom").style.display=custom?"block":"none";
  if(!custom)localStorage.setItem("oiec_center",$("#center").value);
- renderStudent();
+ saveCurrentMeta(); renderStudent();
 };
 $("#centerCustom").oninput=()=>{
  const v=$("#centerCustom").value.trim();
  localStorage.setItem("oiec_center_custom",v);
- renderStudent();
+ saveCurrentMeta(); renderStudent();
 };
 $("#centerCustom").onchange=()=>{
  const v=$("#centerCustom").value.trim();
@@ -125,42 +160,77 @@ const oldCenter=localStorage.getItem("oiec_center")||"";
 if(oldCenter){addOption($("#center"),oldCenter);$("#center").value=oldCenter}
 $("#jsonFile").onchange=async e=>{
  try{
-  DATA=JSON.parse(await e.target.files[0].text());
-  if(DATA.loaiBaoCao!=="KAPLA_OIEC_MONTHLY")throw Error("Không đúng JSON OIEC Monthly.");
-  $("#classInfo").textContent=DATA.tenLop||"—";$("#monthInfo").textContent=DATA.thang||"—";$("#sessionsInfo").textContent=DATA.soBuoi||0;$("#subjectInfo").textContent=subject();
-  $("#lessonList").classList.remove("empty");$("#lessonList").innerHTML=(DATA.noiDungThang||[]).map(x=>`<div class="lesson-item"><b>${esc(x.ngayHoc)} • ${esc(x.tenBaiHoc)}</b>${esc(x.noiDungBaiHoc)}</div>`).join("");
-  const sel=$("#studentSelect");sel.disabled=false;sel.innerHTML=DATA.hocVien.map(x=>`<option>${esc(x.tenHocVien)}</option>`).join("");current=DATA.hocVien[0]?.tenHocVien||null;sel.value=current;sel.onchange=()=>{current=sel.value;renderStudent()};
-  $("#aiBtn").disabled=false;$("#printBtn").disabled=false;renderStudent();
+  const files=[...e.target.files];
+  if(!files.length)return;
+  const loaded=[];
+  for(const f of files){
+   const d=JSON.parse(await f.text());
+   if(d.loaiBaoCao!=="KAPLA_OIEC_MONTHLY")throw Error(`${f.name}: không đúng JSON OIEC Monthly.`);
+   if(!Array.isArray(d.hocVien)||!d.hocVien.length)throw Error(`${f.name}: không có học viên.`);
+   loaded.push(d);
+  }
+  CLASSES=loaded;
+  CLASS_AI={};
+  CLASS_META={};
+  for(const d of CLASSES){
+   const k=classKey(d);
+   try{CLASS_AI[k]=JSON.parse(localStorage.getItem(`oiec_ai_${k}`)||"{}")}catch(_){CLASS_AI[k]={}}
+   CLASS_META[k]={
+    teacher:localStorage.getItem(`oiec_teacher_${k}`)||selectedTeacher()||"",
+    center:localStorage.getItem(`oiec_center_${k}`)||selectedCenter()||""
+   };
+  }
+  const cs=$("#classSelect");
+  cs.disabled=false;
+  cs.innerHTML=CLASSES.map(d=>`<option value="${esc(classKey(d))}">${esc(d.tenLop)} • ${esc(d.thang)}</option>`).join("");
+  currentClassKey=classKey(CLASSES[0]); cs.value=currentClassKey;
+  cs.onchange=()=>{
+   saveCurrentMeta();
+   if(DATA){
+    const oldk=classKey(DATA),m=CLASS_META[oldk]||{};
+    localStorage.setItem(`oiec_teacher_${oldk}`,m.teacher||"");
+    localStorage.setItem(`oiec_center_${oldk}`,m.center||"");
+   }
+   currentClassKey=cs.value; syncCurrentClass();
+  };
+  $("#studentSelect").onchange=()=>{current=$("#studentSelect").value;renderStudent()};
+  syncCurrentClass();
+  $("#aiBtn").disabled=false;$("#printBtn").disabled=false;
+  alert(`Đã nhập ${CLASSES.length} lớp • ${CLASSES.reduce((n,d)=>n+d.hocVien.length,0)} học viên.`);
  }catch(err){alert("Không đọc được JSON: "+err.message)}
 };
+
 $("#aiBtn").onclick=async()=>{
- if(!DATA?.hocVien?.length)return;
+ if(!CLASSES.length)return;
  if(location.protocol==="file:"){
-   alert("Generate AI cần chạy bản deploy trên Vercel để gọi /api/generate. Mở file local vẫn dùng để kiểm tra giao diện/import JSON.");
+   alert("Generate AI cần chạy bản deploy trên Vercel.");
    return;
  }
- const btn=$("#aiBtn");
+ saveCurrentMeta();
+ const btn=$("#aiBtn"),old=btn.textContent;
  btn.disabled=true;
- const old=btn.textContent;
+ let done=0,total=CLASSES.reduce((n,d)=>n+d.hocVien.length,0),failed=[];
  try{
-   btn.textContent=`AI đang xử lý ${DATA.hocVien.length} học viên...`;
+  for(let ci=0;ci<CLASSES.length;ci++){
+   const d=CLASSES[ci],k=classKey(d);
+   DATA=d;
+   btn.textContent=`AI ${ci+1}/${CLASSES.length} lớp • ${done}/${total} học viên...`;
    const r=await fetch("/api/generate",{
-     method:"POST",
-     headers:{"Content-Type":"application/json"},
-     body:JSON.stringify({data:DATA,subject:subject()})
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({data:d,subject:subject()})
    });
    const out=await r.json();
-   if(!r.ok)throw Error(out.error||"Không tạo được nhận xét AI.");
-   AI=out.students||{};
-   localStorage.setItem(`oiec_ai_${DATA.tenLop}_${DATA.thang}`,JSON.stringify(AI));
-   renderStudent();
-   alert(`Đã tạo đánh giá AI cho ${Object.keys(AI).length}/${DATA.hocVien.length} học viên.`);
- }catch(e){
-   alert("Generate AI lỗi: "+e.message);
- }finally{
-   btn.disabled=false;
-   btn.textContent=old;
- }
+   if(!r.ok){failed.push(`${d.tenLop}: ${out.error||"lỗi AI"}`);continue}
+   CLASS_AI[k]=out.students||{};
+   localStorage.setItem(`oiec_ai_${k}`,JSON.stringify(CLASS_AI[k]));
+   done+=Object.keys(CLASS_AI[k]).length;
+  }
+  currentClassKey=$("#classSelect").value;
+  syncCurrentClass();
+  if(failed.length) alert(`Đã tạo AI ${done}/${total} học viên.\n\nLớp lỗi:\n${failed.join("\n")}`);
+  else alert(`Đã tạo AI xong ${CLASSES.length} lớp • ${done}/${total} học viên.`);
+ }catch(e){alert("Generate AI lỗi: "+e.message)}
+ finally{btn.disabled=false;btn.textContent=old}
 };
 
 function safeFileName(name){
@@ -198,51 +268,54 @@ body{display:block!important}
 </html>`;
 }
 
-$("#printBtn").onclick=async()=>{
- if(!DATA?.hocVien?.length)return;
+async function downloadClassZip(d,classIndex,totalClasses){
+ const k=classKey(d);
+ DATA=d; AI=CLASS_AI[k]||{};
+ currentClassKey=k;
+ const reports=[];
+ for(let i=0;i<d.hocVien.length;i++){
+   const name=d.hocVien[i].tenHocVien;
+   $("#printBtn").textContent=`ZIP ${classIndex}/${totalClasses} • ${i+1}/${d.hocVien.length}`;
+   current=name; renderStudent(); await waitFrame();
+   reports.push({name,html:reportHTML()});
+ }
+ const zipName=classCode(d.tenLop);
+ const r=await fetch("/api/pdfzip",{
+   method:"POST",headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({reports,zipName})
+ });
+ if(!r.ok){
+   let msg=`Không tạo được ZIP ${zipName}.`;
+   try{const j=await r.json();msg=j.error||msg}catch(_){}
+   throw Error(msg);
+ }
+ const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=`${zipName}.zip`;document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),2500);
+ await new Promise(r=>setTimeout(r,500));
+}
 
+$("#printBtn").onclick=async()=>{
+ if(!CLASSES.length)return;
  if(location.protocol==="file:"){
-   alert("Xuất ZIP PDF HTML/CSS cần chạy bản đã deploy trên Vercel. Mở bằng file:// vẫn nhập JSON/test giao diện được, nhưng Chrome không cho trang local gọi API tạo PDF.");
+   alert("Xuất ZIP PDF cần chạy bản đã deploy trên Vercel.");
    return;
  }
-
- const btn=$("#printBtn"),oldCurrent=current;
+ saveCurrentMeta();
+ const btn=$("#printBtn"),old=btn.textContent;
+ const oldKey=currentClassKey,oldStudent=current;
  btn.disabled=true;
  try{
-   const reports=[];
-   for(let i=0;i<DATA.hocVien.length;i++){
-     const name=DATA.hocVien[i].tenHocVien;
-     btn.textContent=`Chuẩn bị ${i+1}/${DATA.hocVien.length}...`;
-     current=name;$("#studentSelect").value=name;renderStudent();
-     await waitFrame();
-     reports.push({name,html:reportHTML()});
-   }
-
-   btn.textContent="Đang tạo ZIP PDF...";
-   const r=await fetch("/api/pdfzip",{
-     method:"POST",
-     headers:{"Content-Type":"application/json"},
-     body:JSON.stringify({reports})
-   });
-
-   if(!r.ok){
-     let msg="Không tạo được ZIP PDF.";
-     try{const j=await r.json();msg=j.error||msg}catch(e){}
-     throw Error(msg);
-   }
-
-   const blob=await r.blob();
-   const url=URL.createObjectURL(blob),a=document.createElement("a");
-   a.href=url;
-   a.download=`OIEC-${safeFileName(DATA.tenLop)}-${safeFileName(DATA.thang).replace("/","-")}.zip`;
-   document.body.appendChild(a);a.click();a.remove();
-   setTimeout(()=>URL.revokeObjectURL(url),1500);
- }catch(e){
-   alert(e.message);
- }finally{
-   current=oldCurrent||DATA.hocVien[0]?.tenHocVien;
-   $("#studentSelect").value=current;renderStudent();
-   btn.disabled=false;btn.textContent="Tải ZIP PDF";
+   for(let i=0;i<CLASSES.length;i++) await downloadClassZip(CLASSES[i],i+1,CLASSES.length);
+   alert(`Đã tạo ${CLASSES.length} ZIP riêng theo từng lớp.`);
+ }catch(e){alert(e.message)}
+ finally{
+   currentClassKey=oldKey;DATA=CLASSES.find(x=>classKey(x)===oldKey)||CLASSES[0];
+   AI=CLASS_AI[currentClassKey]||{};current=oldStudent||DATA.hocVien[0]?.tenHocVien;
+   $("#classSelect").value=currentClassKey;syncCurrentClass();
+   if(DATA.hocVien.some(x=>x.tenHocVien===oldStudent)){current=oldStudent;$("#studentSelect").value=current;renderStudent()}
+   btn.disabled=false;btn.textContent=old;
  }
 };
+
 renderCriteria();

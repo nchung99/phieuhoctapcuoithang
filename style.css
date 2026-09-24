@@ -564,3 +564,141 @@
     overflow:hidden!important;
   }
 }
+
+
+/* =========================================================
+   v5.1.1 - Balanced one-page layout
+   Giữ 1 trang A4 nhưng phân bố chiều cao đều hơn.
+   ========================================================= */
+.report{
+  display:flex!important;
+  flex-direction:column!important;
+  height:297mm!important;
+  min-height:297mm!important;
+  max-height:297mm!important;
+}
+.monthly-hero{
+  height:25mm!important;
+  min-height:25mm!important;
+  padding:3.5mm 8mm!important;
+}
+.hero-left>img{
+  width:45mm!important;
+  max-height:16mm!important;
+}
+.hero-left h1{
+  font-size:18px!important;
+  line-height:1.08!important;
+}
+.hero-left p{
+  margin-top:2.5px!important;
+  font-size:12px!important;
+}
+
+.m-section{
+  margin-top:3.2mm!important;
+}
+.m-title{
+  margin-bottom:2mm!important;
+}
+.m-title b{
+  font-size:14.5px!important;
+  line-height:1.1!important;
+}
+
+/* Thông tin chung */
+.student-grid{
+  gap:2mm 7mm!important;
+}
+.field{
+  min-height:8mm!important;
+  padding:1.7mm 2.4mm!important;
+}
+.field small,.field strong{
+  font-size:11.5px!important;
+  line-height:1.15!important;
+}
+
+/* 4 buổi học */
+.month-lessons{
+  gap:2mm 4mm!important;
+}
+.month-lesson{
+  min-height:12mm!important;
+  padding:2mm 2.3mm!important;
+}
+.month-lesson b{
+  font-size:10.5px!important;
+  line-height:1.15!important;
+}
+.month-lesson span{
+  margin-top:1.5px!important;
+  font-size:9.2px!important;
+  line-height:1.25!important;
+}
+
+/* Đánh giá chuyên môn */
+.professional-cards{
+  padding:2.2mm 3.2mm 2.2mm 5mm!important;
+}
+.pro-card{
+  padding:.7mm 0!important;
+  font-size:10.5px!important;
+  line-height:1.25!important;
+}
+
+/* Năng lực & sản phẩm */
+.ability-card{
+  min-height:26mm!important;
+}
+.ability-card h3{
+  min-height:9.5mm!important;
+  padding:1.8mm 1mm!important;
+  font-size:9.8px!important;
+}
+.ability-card>div:not(.completion){
+  padding:2.4mm!important;
+  font-size:9.4px!important;
+  line-height:1.25!important;
+}
+.completion{
+  padding:1.8mm 2.2mm!important;
+  font-size:8.6px!important;
+}
+
+/* Tiêu chí chung: giãn vừa đủ để không dồn sát */
+.criteria thead th{
+  font-size:9px!important;
+  padding:.7mm!important;
+}
+.criteria tbody td{
+  height:7.2mm!important;
+  padding:.8mm .7mm!important;
+  font-size:9.5px!important;
+  line-height:1.1!important;
+}
+.criteria tbody td:first-child{
+  font-size:10.3px!important;
+}
+.score-circle{
+  width:5.3mm!important;
+  height:5.3mm!important;
+}
+
+/* Footer được đẩy xuống đáy trang, phần trống được chia vào các section phía trên */
+.footer{
+  margin-top:auto!important;
+  padding-top:2mm!important;
+  padding-bottom:1mm!important;
+  font-size:7.4px!important;
+}
+
+/* vẫn khóa đúng 1 trang */
+@media print{
+  .report{
+    height:297mm!important;
+    min-height:297mm!important;
+    max-height:297mm!important;
+    overflow:hidden!important;
+  }
+}

@@ -79,29 +79,42 @@ DỮ LIỆU RIÊNG HỌC VIÊN:
 ${JSON.stringify(student)}`;
 }
 
+async function runWithConcurrency(items,limit,worker){
+ const results=new Array(items.length);
+ let next=0;
+ async function runner(){
+  while(true){
+   const i=next++;
+   if(i>=items.length)return;
+   results[i]=await worker(items[i],i);
+  }
+ }
+ await Promise.all(Array.from({length:Math.min(limit,items.length)},runner));
+ return results;
+}
+
+async function generateStudent(key,common,student,subject){
+ let last;
+ for(let attempt=0;attempt<2;attempt++){
+  try{return await gemini(key,promptFor(common,student,subject))}
+  catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,700))}
+ }
+ throw last;
+}
+
 export default async function handler(req,res){
  if(req.method!=="POST")return res.status(405).json({error:"Method not allowed"});
  const key=process.env.GEMINI_API_KEY;
  if(!key)return res.status(500).json({error:"Chưa cấu hình GEMINI_API_KEY trên Vercel."});
-
- const data=req.body?.data;
- const subject=req.body?.subject||"Coding / Robotics";
+ const data=req.body?.data,subject=req.body?.subject||"Coding / Robotics";
  if(!data?.hocVien?.length)return res.status(400).json({error:"Không có dữ liệu học viên."});
-
- const common={
-  tenLop:data.tenLop,
-  thang:data.thang,
-  soBuoi:data.soBuoi,
-  noiDungThang:data.noiDungThang
- };
-
+ const common={tenLop:data.tenLop,thang:data.thang,soBuoi:data.soBuoi,noiDungThang:data.noiDungThang};
  try{
-  // Xử lý tuần tự để giảm nguy cơ rate-limit trên Gemini free tier.
-  const students={};
-  for(const student of data.hocVien){
-   students[student.tenHocVien]=await gemini(key,promptFor(common,student,subject));
-  }
-  return res.status(200).json({students});
+  const pairs=await runWithConcurrency(data.hocVien,4,async student=>{
+   const result=await generateStudent(key,common,student,subject);
+   return [student.tenHocVien,result];
+  });
+  return res.status(200).json({students:Object.fromEntries(pairs)});
  }catch(e){
   return res.status(500).json({error:e.message});
  }

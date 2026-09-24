@@ -11,6 +11,7 @@ function safeName(s="Hoc vien"){
 export default async function handler(req,res){
   if(req.method!=="POST") return res.status(405).json({error:"Method not allowed"});
   const reports=req.body?.reports;
+  const zipName=safeName(req.body?.zipName||"OIEC-Monthly");
   if(!Array.isArray(reports)||!reports.length) return res.status(400).json({error:"Không có báo cáo để xuất."});
 
   let browser;
@@ -40,7 +41,7 @@ export default async function handler(req,res){
 
     const out=await zip.generateAsync({type:"nodebuffer",compression:"DEFLATE"});
     res.setHeader("Content-Type","application/zip");
-    res.setHeader("Content-Disposition",`attachment; filename="OIEC-Monthly.zip"`);
+    res.setHeader("Content-Disposition",`attachment; filename="${zipName}.zip"`);
     return res.status(200).send(out);
   }catch(e){
     return res.status(500).json({error:"Không tạo được PDF/ZIP: "+e.message});
