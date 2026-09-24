@@ -269,18 +269,57 @@ function openEdit(){
 }
 function closeEdit(){$("#editModal").hidden=true}
 function saveEdit(){
- const f=new FormData($("#editForm")),old=current,newName=String(f.get("student")||old).trim()||old,st=DATA.hocVien.find(x=>x.tenHocVien===old);
- if(newName!==old){
-   if(DATA.hocVien.some(x=>x.tenHocVien===newName)){alert("Tên học viên đã tồn tại.");return}
-   st.tenHocVien=newName;if(AI[old]){AI[newName]=AI[old];delete AI[old]}
-   if(MANUAL[currentClassKey]?.[old]){MANUAL[currentClassKey][newName]=MANUAL[currentClassKey][old];delete MANUAL[currentClassKey][old]}
-   current=newName;
- }
- DATA.tenLop=String(f.get("className")||DATA.tenLop).trim();DATA.thang=String(f.get("month")||DATA.thang).trim();DATA.__manualSubject=String(f.get("subject")||"").trim();
- const teacher=String(f.get("teacher")||"").trim(),center=String(f.get("center")||"").trim();CLASS_META[currentClassKey]??={};CLASS_META[currentClassKey].teacher=teacher;CLASS_META[currentClassKey].center=center;addOption($("#teacher"),teacher);addOption($("#center"),center);$("#teacher").value=teacher;$("#center").value=center;localStorage.setItem(`oiec_teacher_${currentClassKey}`,teacher);localStorage.setItem(`oiec_center_${currentClassKey}`,center);
- (DATA.noiDungThang||[]).forEach((x,i)=>{x.ngayHoc=String(f.get(`date_${i}`)||"").trim();x.tenBaiHoc=String(f.get(`title_${i}`)||"").trim();x.noiDungBaiHoc=String(f.get(`content_${i}`)||"").trim()});
- MANUAL[currentClassKey]??={};const m=MANUAL[currentClassKey][current]??={};m.chuyenMon=[0,1,2,3,4].map(i=>String(f.get(`pro_${i}`)||"").trim());m.kienThucLapTrinh=String(f.get("knowledge")||"").trim();m.kyNangRobotics=String(f.get("skill")||"").trim();m.sanPhamDuAn=String(f.get("project")||"").trim();saveManual();localStorage.setItem(`oiec_ai_${currentClassKey}`,JSON.stringify(AI));
- $("#studentSelect").innerHTML=DATA.hocVien.map(x=>`<option>${esc(x.tenHocVien)}</option>`).join("");$("#studentSelect").value=current;$("#classInfo").textContent=DATA.tenLop;$("#monthInfo").textContent=DATA.thang;$("#subjectInfo").textContent=subject();closeEdit();renderStudent();
+ try{
+  const f=new FormData($("#editForm")),oldStudent=current,oldKey=currentClassKey;
+  const newName=String(f.get("student")||oldStudent).trim()||oldStudent;
+  const st=DATA.hocVien.find(x=>x.tenHocVien===oldStudent);if(!st)throw Error("Không tìm thấy học viên hiện tại.");
+
+  // Lưu nội dung trước khi đổi key lớp/tháng.
+  MANUAL[oldKey]??={};
+  const oldManual=MANUAL[oldKey][oldStudent]??={};
+  oldManual.chuyenMon=[0,1,2,3,4].map(i=>String(f.get(`pro_${i}`)||"").trim());
+  oldManual.kienThucLapTrinh=String(f.get("knowledge")||"").trim();
+  oldManual.kyNangRobotics=String(f.get("skill")||"").trim();
+  oldManual.sanPhamDuAn=String(f.get("project")||"").trim();
+
+  if(newName!==oldStudent){
+   if(DATA.hocVien.some(x=>x!==st&&x.tenHocVien===newName))throw Error("Tên học viên đã tồn tại.");
+   st.tenHocVien=newName;
+   if(CLASS_AI[oldKey]?.[oldStudent]){CLASS_AI[oldKey][newName]=CLASS_AI[oldKey][oldStudent];delete CLASS_AI[oldKey][oldStudent]}
+   MANUAL[oldKey][newName]=oldManual;delete MANUAL[oldKey][oldStudent];current=newName;
+  }
+
+  DATA.tenLop=String(f.get("className")||DATA.tenLop).trim();
+  DATA.thang=String(f.get("month")||DATA.thang).trim();
+  DATA.__manualSubject=String(f.get("subject")||"").trim();
+  (DATA.noiDungThang||[]).forEach((x,i)=>{x.ngayHoc=String(f.get(`date_${i}`)||"").trim();x.tenBaiHoc=String(f.get(`title_${i}`)||"").trim();x.noiDungBaiHoc=String(f.get(`content_${i}`)||"").trim()});
+
+  const teacher=String(f.get("teacher")||"").trim(),center=String(f.get("center")||"").trim();
+  const newKey=classKey(DATA);
+
+  // Nếu sửa lớp/tháng thì chuyển toàn bộ cache/meta/manual sang key mới.
+  if(newKey!==oldKey){
+   CLASS_AI[newKey]=CLASS_AI[oldKey]||{};delete CLASS_AI[oldKey];
+   MANUAL[newKey]=MANUAL[oldKey]||{};delete MANUAL[oldKey];
+   CLASS_META[newKey]=CLASS_META[oldKey]||{};delete CLASS_META[oldKey];
+   localStorage.removeItem(`oiec_ai_${oldKey}`);localStorage.removeItem(`oiec_manual_${oldKey}`);localStorage.removeItem(`oiec_teacher_${oldKey}`);localStorage.removeItem(`oiec_center_${oldKey}`);
+   currentClassKey=newKey;
+  }
+  CLASS_META[currentClassKey]??={};CLASS_META[currentClassKey].teacher=teacher;CLASS_META[currentClassKey].center=center;
+  addOption($("#teacher"),teacher);addOption($("#center"),center);$("#teacher").value=teacher;$("#center").value=center;
+  AI=CLASS_AI[currentClassKey]||{};
+  localStorage.setItem(`oiec_ai_${currentClassKey}`,JSON.stringify(AI));
+  localStorage.setItem(`oiec_manual_${currentClassKey}`,JSON.stringify(MANUAL[currentClassKey]||{}));
+  localStorage.setItem(`oiec_teacher_${currentClassKey}`,teacher);localStorage.setItem(`oiec_center_${currentClassKey}`,center);
+
+  // Rebuild dropdowns because class/month/name may have changed.
+  $("#classSelect").innerHTML=CLASSES.map(d=>`<option value="${esc(classKey(d))}">${esc(d.tenLop)} • ${esc(d.thang)}</option>`).join("");
+  $("#classSelect").value=currentClassKey;
+  $("#studentSelect").innerHTML=DATA.hocVien.map(x=>`<option>${esc(x.tenHocVien)}</option>`).join("");$("#studentSelect").value=current;
+  $("#classInfo").textContent=DATA.tenLop||"—";$("#monthInfo").textContent=DATA.thang||"—";$("#sessionsInfo").textContent=DATA.soBuoi||0;$("#subjectInfo").textContent=subject();
+  $("#lessonList").innerHTML=(DATA.noiDungThang||[]).map(x=>`<div class="lesson-item"><b>${esc(x.ngayHoc)} • ${esc(x.tenBaiHoc)}</b>${esc(x.noiDungBaiHoc)}</div>`).join("");
+  closeEdit();renderStudent();
+ }catch(e){alert("Không lưu được: "+e.message)}
 }
 $("#editBtn").onclick=openEdit;$("#editClose").onclick=closeEdit;$("#editCancel").onclick=closeEdit;$("#editSave").onclick=saveEdit;
 $("#editModal").addEventListener("click",e=>{if(e.target===$("#editModal"))closeEdit()});
@@ -320,7 +359,7 @@ async function retryFailedBatch(index,button){
  const exactStudents=f.names.map(n=>d.hocVien.find(s=>s.tenHocVien===n)).filter(Boolean);
  if(!exactStudents.length)return alert("Không tìm thấy học viên của batch.");
  const old=button?.textContent||"Retry";if(button){button.disabled=true;button.textContent="Đang retry..."}
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),18000);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),24000);
  try{
   const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:{...d,hocVien:exactStudents},subject:subjectOfData(d),batch:f.batch}),signal:controller.signal});
   const raw=await r.text();let out;try{out=JSON.parse(raw)}catch(_){throw Error(raw.slice(0,180)||`HTTP ${r.status}`)}
@@ -329,7 +368,7 @@ async function retryFailedBatch(index,button){
   if(missing.length)throw Error(`AI thiếu kết quả: ${missing.join(", ")}`);
   CLASS_AI[f.classKey]={...(CLASS_AI[f.classKey]||{}),...got};localStorage.setItem(`oiec_ai_${f.classKey}`,JSON.stringify(CLASS_AI[f.classKey]));
   FAILED_BATCHES.splice(index,1);renderFailedBatches();currentClassKey=$("#classSelect").value;syncCurrentClass();
- }catch(e){f.error=e?.name==="AbortError"?"Request quá 18 giây":e.message;renderFailedBatches();alert(`Retry batch lỗi: ${f.error}`)}
+ }catch(e){f.error=e?.name==="AbortError"?"Request quá 24 giây":e.message;renderFailedBatches();alert(`Retry batch lỗi: ${f.error}`)}
  finally{clearTimeout(timer)}
 }
 
@@ -338,18 +377,18 @@ $("#aiBtn").onclick=async()=>{
  if(location.protocol==="file:"){alert("Generate AI cần chạy bản deploy trên Vercel.");return}
  saveCurrentMeta();const btn=$("#aiBtn"),old=btn.textContent;btn.disabled=true;FAILED_BATCHES=[];renderFailedBatches();
  const jobs=[];for(const d of CLASSES){const k=classKey(d);for(let i=0;i<d.hocVien.length;i+=5)jobs.push({classKey:k,className:d.tenLop,data:d,batch:Math.floor(i/5)+1,students:d.hocVien.slice(i,i+5)})}
- const WORKERS=Math.min(4,jobs.length);let next=0,done=0,finished=0;const total=CLASSES.reduce((n,d)=>n+d.hocVien.length,0);
+ const WORKERS=Math.min(2,jobs.length);let next=0,done=0,finished=0;const total=CLASSES.reduce((n,d)=>n+d.hocVien.length,0);
  const update=()=>btn.textContent=`AI ${finished}/${jobs.length} batch • ${done}/${total} học viên • ${WORKERS} luồng`;
  function fail(job,error){FAILED_BATCHES.push({classKey:job.classKey,className:job.className,batch:job.batch,names:job.students.map(s=>s.tenHocVien),error:error||"lỗi AI"});renderFailedBatches()}
  async function run(job){
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),18000);
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),24000);
   try{
    const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:{...job.data,hocVien:job.students},subject:subjectOfData(job.data),batch:job.batch}),signal:controller.signal});
    const raw=await r.text();let out;try{out=JSON.parse(raw)}catch(_){throw Error(raw.slice(0,180)||`HTTP ${r.status}`)}
    if(!r.ok||out.error)throw Error(out.error||`HTTP ${r.status}`);
    const got=out.students||{},missing=job.students.filter(s=>!got[s.tenHocVien]).map(s=>s.tenHocVien);if(missing.length)throw Error(`AI thiếu kết quả: ${missing.join(", ")}`);
    CLASS_AI[job.classKey]={...(CLASS_AI[job.classKey]||{}),...got};localStorage.setItem(`oiec_ai_${job.classKey}`,JSON.stringify(CLASS_AI[job.classKey]));done+=Object.keys(got).length;
-  }catch(e){fail(job,e?.name==="AbortError"?"Request quá 18 giây":e.message)}
+  }catch(e){fail(job,e?.name==="AbortError"?"Request quá 24 giây":e.message)}
   finally{clearTimeout(timer);finished++;update()}
  }
  async function worker(){while(true){const i=next++;if(i>=jobs.length)return;await run(jobs[i])}}
