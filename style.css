@@ -793,3 +793,11 @@
   padding-top:1.2mm!important;
   padding-bottom:.5mm!important;
 }
+
+/* v5.4.1 - mã lớp phải dễ phân biệt số 0 */
+#rClass{
+  font-family: Arial, Helvetica, sans-serif!important;
+  font-variant-numeric: lining-nums tabular-nums!important;
+  letter-spacing:.15px!important;
+}
+

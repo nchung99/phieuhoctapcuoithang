@@ -40,12 +40,10 @@ NGUYÊN TẮC:
 - Không tự bịa hành vi, làm việc nhóm, đạo đức, sáng tạo, lắp ráp... nếu dữ liệu không hỗ trợ.
 - Câu chữ ngắn, tự nhiên như giáo viên viết.
 - Bộ môn: ${subject}.
-- Điểm tiêu chí chung nên chủ yếu 4-5 khi học viên học bình thường/tốt:
+- Điểm tiêu chí chung CHỈ ĐƯỢC dùng 4 hoặc 5.
   + 5: kết quả/nhận xét tích cực rõ, thể hiện tốt hoặc có tiến bộ.
-  + 4: học ổn định, không có dấu hiệu tiêu cực; đây là mức thông thường.
-  + 3: chỉ khi có căn cứ rõ là cần cải thiện.
-  + 1-2: chỉ khi có bằng chứng rất rõ về khó khăn/hạn chế đáng kể.
-- Không hạ xuống 3 chỉ vì nhận xét không nhắc trực tiếp tiêu chí.
+  + 4: học ổn định hoặc dữ liệu chưa đủ để khẳng định mức nổi bật.
+- Tuyệt đối không trả về 1, 2 hoặc 3 cho bất kỳ tiêu chí nào.
 - mucDoHoanThien bắt buộc CHÍNH XÁC một trong hai giá trị: "Đúng yêu cầu", "Có sáng tạo". Không được trả về "Đạt tối thiểu".
 
 Trả về JSON THUẦN, không markdown, đúng dạng:

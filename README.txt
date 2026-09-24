@@ -86,3 +86,16 @@ v5.4 BALANCED FINAL
 - Vẫn khóa đúng 1 trang A4.
 - Mức độ hoàn thiện chỉ còn: Đúng yêu cầu / Có sáng tạo.
 - AI bị cấm trả về Đạt tối thiểu; lựa chọn này cũng được ẩn khỏi phiếu.
+
+v5.4.1
+- Mã lớp giữ nguyên chuỗi từ EMS; đổi riêng font mã lớp sang Arial để số 0 không bị nhìn giống chữ o.
+- Tiêu chí chung chỉ dùng mức 4 hoặc 5.
+- AI bị cấm trả 1/2/3.
+- Điểm cũ 1/2/3 nếu còn cache sẽ hiển thị tối thiểu là 4.
+- Chỉnh tay chỉ cho chọn 4 hoặc 5.
+
+v5.4.2
+- AI tự chấm tiêu chí: chỉ 4 hoặc 5.
+- Giáo viên chỉnh tay: chọn tự do từ 1 đến 5.
+- Điểm chỉnh tay được lưu theo học viên/lớp và dùng khi xuất PDF.
+- Mã lớp vẫn dùng font dễ phân biệt số 0 và chữ O.
