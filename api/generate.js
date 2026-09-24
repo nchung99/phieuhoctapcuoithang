@@ -36,7 +36,13 @@ NGUYÊN TẮC:
 - Buổi vắng không được tính như điểm thấp. Nếu tham gia 3/4 buổi thì đánh giá trên 3 buổi đã học và hiểu rằng học viên tham gia 3/4.
 - So sánh chuỗi điểm và nhận xét theo thời gian để nhận biết tiến bộ.
 - Không tự bịa việc lắp ráp robot, làm việc nhóm, thái độ, sáng tạo... nếu dữ liệu không cho thấy điều đó.
-- Nếu dữ liệu chưa đủ cho một tiêu chí, dùng cách diễn đạt thận trọng và điểm 3.
+- Thang điểm tiêu chí chung cần phù hợp với phiếu đánh giá gửi phụ huynh:
+  + 5: thể hiện tốt/nổi bật hoặc duy trì kết quả rất tốt, có bằng chứng tích cực rõ.
+  + 4: đạt tốt/ổn định; đây là mức phù hợp khi học viên học đều, điểm số tốt và không có dấu hiệu tiêu cực.
+  + 3: chỉ dùng khi dữ liệu cho thấy tiêu chí ở mức trung bình hoặc có điểm cần cải thiện rõ.
+  + 1-2: chỉ dùng khi dữ liệu thực sự có bằng chứng về khó khăn/hạn chế đáng kể.
+- Không được tự động cho 3 chỉ vì nhận xét giáo viên không nhắc trực tiếp một tiêu chí. Hãy kết hợp điểm số, mức độ ổn định, sự tham gia và nhận xét của các buổi; nếu kết quả học tập ổn định/tích cực và không có dấu hiệu tiêu cực thì có thể dùng mức 4.
+- Điểm 5 vẫn cần tín hiệu tích cực rõ ràng; không chấm tất cả học viên giống nhau.
 - Câu chữ tự nhiên như giáo viên viết, ngắn gọn, tránh văn phong AI/sáo rỗng.
 - Các học viên có dữ liệu khác nhau phải có nội dung khác nhau; không chỉ thay tên trong cùng một mẫu.
 - Bộ môn của báo cáo: ${subject}.

@@ -26,3 +26,11 @@ v4.9 AI
 - AI tự điền 5 đánh giá chuyên môn, 3 khối năng lực/sản phẩm, mức độ hoàn thiện và 6 điểm tiêu chí 1–5.
 - Kết quả AI được lưu localStorage theo lớp + tháng.
 - Generate AI cần deploy Vercel và có GEMINI_API_KEY.
+
+v5.0:
+- AI chấm tiêu chí chung mềm và hợp lý hơn: học ổn định/tích cực thường ở mức 4;
+  mức 3 chỉ khi có dấu hiệu trung bình/cần cải thiện, 1-2 cần bằng chứng rõ; 5 cần tín hiệu nổi bật.
+- Không còn mặc định thiếu dữ liệu = 3.
+- Thu gọn header, khoảng cách section, ô thông tin, 4 tuần, đánh giá chuyên môn,
+  bảng năng lực và bảng tiêu chí để PDF vừa đúng 1 trang A4.
+- API PDF dùng kích thước chính xác 210x297mm và printBackground.

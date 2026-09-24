@@ -29,7 +29,8 @@ export default async function handler(req,res){
       await page.setContent(item.html,{waitUntil:"networkidle0"});
       await page.emulateMediaType("print");
       const pdf=await page.pdf({
-        format:"A4",
+        width:"210mm",
+        height:"297mm",
         printBackground:true,
         preferCSSPageSize:true,
         margin:{top:"0mm",right:"0mm",bottom:"0mm",left:"0mm"}
