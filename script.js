@@ -95,7 +95,7 @@ function renderStudent(){
  $("#rClass").textContent=DATA.tenLop||"—";
  $("#rSubject").textContent=sub;
  $("#rMonth").textContent=DATA.thang||"—";
- $("#rDuration").textContent=DATA.__manualDuration||`${DATA.soBuoi||4} buổi • 60 phút / buổi`;
+ $("#rDuration").textContent=`${DATA.soBuoi||4} buổi • 60 phút / buổi`;
  $("#skillHeading").textContent=sub==="Coding"?"Kỹ năng lập trình":sub==="Robotics"?"Kỹ năng Robotics":"Kỹ năng theo bộ môn";
 
  const lessons=DATA.noiDungThang||[];
@@ -252,108 +252,11 @@ $("#jsonFile").onchange=async e=>{
 
 
 
-function editEsc(v){return String(v??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-function editField(label,name,value,full=false,area=false){
- return `<div class="edit-group ${full?"full":""}"><label>${label}</label>${area
-   ?`<textarea name="${name}">${String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</textarea>`
-   :`<input name="${name}" value="${editEsc(value)}">`}</div>`;
-}
-function openEditPanel(){
- if(!DATA||!current)return;
- const student=DATA.hocVien.find(x=>x.tenHocVien===current);
- const a={...(AI[current]||{}),...(MANUAL[currentClassKey]?.[current]||{})};
- const pro=a.chuyenMon||[];
- let out=`<div class="edit-section">Thông tin chung</div>`;
- out+=editField("Tên học viên","studentName",current);
- out+=editField("Lớp","className",DATA.tenLop);
- out+=editField("Giáo viên","teacher",selectedTeacher());
- out+=editField("Center","center",selectedCenter());
- out+=editField("Bộ môn","subject",subject());
- out+=editField("Tháng đánh giá","month",DATA.thang);
- out+=editField("Thời lượng","duration",DATA.__manualDuration||`${DATA.soBuoi||4} buổi • 60 phút / buổi`,true);
-
- out+=`<div class="edit-section">Nội dung học trong tháng</div>`;
- (DATA.noiDungThang||[]).forEach((x,i)=>{
-   out+=editField(`Tuần ${i+1} - Ngày học`,`lessonDate_${i}`,x.ngayHoc);
-   out+=editField(`Tuần ${i+1} - Tên bài`,`lessonTitle_${i}`,x.tenBaiHoc);
-   out+=editField(`Tuần ${i+1} - Nội dung`,`lessonContent_${i}`,x.noiDungBaiHoc,true,true);
- });
-
- out+=`<div class="edit-section">Đánh giá chuyên môn</div>`;
- const labels=["Tư duy Logic trong lập trình","Phân tích & xử lý vấn đề","Khả năng sáng tạo","Tiếp thu kiến thức & ghi nhớ","Khả năng làm việc nhóm"];
- labels.forEach((x,i)=>out+=editField(x,`pro_${i}`,pro[i]||"",true,true));
-
- out+=`<div class="edit-section">Năng lực & sản phẩm</div>`;
- out+=editField("Kiến thức - Lập trình","knowledge",a.kienThucLapTrinh||"",true,true);
- out+=editField(subject()==="Coding"?"Kỹ năng lập trình":"Kỹ năng Robotics","skill",a.kyNangRobotics||"",true,true);
- out+=editField("Sản phẩm / Dự án","project",a.sanPhamDuAn||"",true,true);
-
- $("#editForm").innerHTML=out;
- $("#editModal").hidden=false;
-}
-function closeEditPanel(){ $("#editModal").hidden=true; }
-
-function renameStudentForEdit(oldName,newName){
- newName=(newName||"").trim();
- if(!newName||newName===oldName)return oldName;
- if(DATA.hocVien.some(s=>s.tenHocVien===newName)){alert("Tên học viên này đã tồn tại trong lớp.");return oldName}
- const st=DATA.hocVien.find(s=>s.tenHocVien===oldName);
- if(!st)return oldName;
- st.tenHocVien=newName;
- if(AI[oldName]){AI[newName]=AI[oldName];delete AI[oldName]}
- if(MANUAL[currentClassKey]?.[oldName]){
-   MANUAL[currentClassKey][newName]=MANUAL[currentClassKey][oldName];
-   delete MANUAL[currentClassKey][oldName];
- }
- current=newName;
- return newName;
-}
-function saveEditPanel(){
- const fd=new FormData($("#editForm"));
- const oldName=current;
- const newName=renameStudentForEdit(oldName,fd.get("studentName"));
- DATA.tenLop=String(fd.get("className")||DATA.tenLop).trim();
- DATA.thang=String(fd.get("month")||DATA.thang).trim();
- DATA.__manualSubject=String(fd.get("subject")||"").trim();
- DATA.__manualDuration=String(fd.get("duration")||"").trim();
-
- const teacher=String(fd.get("teacher")||"").trim(),center=String(fd.get("center")||"").trim();
- CLASS_META[currentClassKey]??={};
- CLASS_META[currentClassKey].teacher=teacher;CLASS_META[currentClassKey].center=center;
- addOption($("#teacher"),teacher);addOption($("#center"),center);
- $("#teacher").value=teacher;$("#center").value=center;
- localStorage.setItem(`oiec_teacher_${currentClassKey}`,teacher);
- localStorage.setItem(`oiec_center_${currentClassKey}`,center);
-
- (DATA.noiDungThang||[]).forEach((x,i)=>{
-   x.ngayHoc=String(fd.get(`lessonDate_${i}`)||"").trim();
-   x.tenBaiHoc=String(fd.get(`lessonTitle_${i}`)||"").trim();
-   x.noiDungBaiHoc=String(fd.get(`lessonContent_${i}`)||"").trim();
- });
-
- MANUAL[currentClassKey]??={};
- const m=MANUAL[currentClassKey][newName]??={};
- m.chuyenMon=[0,1,2,3,4].map(i=>String(fd.get(`pro_${i}`)||"").trim());
- m.kienThucLapTrinh=String(fd.get("knowledge")||"").trim();
- m.kyNangRobotics=String(fd.get("skill")||"").trim();
- m.sanPhamDuAn=String(fd.get("project")||"").trim();
- saveManual();
- localStorage.setItem(`oiec_ai_${currentClassKey}`,JSON.stringify(AI));
-
- const classOpt=[...$("#classSelect").options].find(o=>o.value===currentClassKey);
- if(classOpt)classOpt.textContent=`${DATA.tenLop} • ${DATA.thang}`;
- $("#studentSelect").innerHTML=DATA.hocVien.map(s=>`<option>${esc(s.tenHocVien)}</option>`).join("");
- $("#studentSelect").value=current;
- $("#classInfo").textContent=DATA.tenLop;$("#monthInfo").textContent=DATA.thang;$("#subjectInfo").textContent=subject();
- closeEditPanel();renderStudent();
-}
-
-$("#editBtn").onclick=openEditPanel;
-$("#editClose").onclick=closeEditPanel;
-$("#editCancel").onclick=closeEditPanel;
-$("#editSave").onclick=saveEditPanel;
-$("#editModal").addEventListener("click",e=>{if(e.target===$("#editModal"))closeEditPanel()});
-
+function ef(label,name,value,full=false,area=false){const v=String(value??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");return `<div class="ef ${full?"full":""}"><label>${label}</label>${area?`<textarea name="${name}">${v}</textarea>`:`<input name="${name}" value="${v}">`}</div>`}
+function openEditor(){if(!DATA||!current)return;const a={...(AI[current]||{}),...(MANUAL[currentClassKey]?.[current]||{})},p=a.chuyenMon||[];let h='<div class="es">Thông tin chung</div>';h+=ef("Tên học viên","student",current)+ef("Lớp","class",DATA.tenLop)+ef("Giáo viên","teacher",selectedTeacher())+ef("Center","center",selectedCenter())+ef("Bộ môn","subject",subject())+ef("Tháng","month",DATA.thang);h+='<div class="es">Nội dung học trong tháng</div>';(DATA.noiDungThang||[]).forEach((x,i)=>{h+=ef(`Tuần ${i+1} - Ngày`,`date_${i}`,x.ngayHoc)+ef(`Tuần ${i+1} - Tên bài`,`title_${i}`,x.tenBaiHoc)+ef(`Tuần ${i+1} - Nội dung`,`content_${i}`,x.noiDungBaiHoc,true,true)});h+='<div class="es">Đánh giá chuyên môn</div>';["Tư duy Logic","Phân tích & xử lý vấn đề","Khả năng sáng tạo","Tiếp thu & ghi nhớ","Làm việc nhóm"].forEach((x,i)=>h+=ef(x,`pro_${i}`,p[i]||"",true,true));h+='<div class="es">Năng lực & sản phẩm</div>';h+=ef("Kiến thức - Lập trình","knowledge",a.kienThucLapTrinh||"",true,true)+ef("Kỹ năng bộ môn","skill",a.kyNangRobotics||"",true,true)+ef("Sản phẩm / Dự án","project",a.sanPhamDuAn||"",true,true);$("#editForm").innerHTML=h;$("#editModal").hidden=false}
+function closeEditor(){$("#editModal").hidden=true}
+function saveEditor(){const f=new FormData($("#editForm")),old=current,newName=String(f.get("student")||old).trim()||old,st=DATA.hocVien.find(x=>x.tenHocVien===old);if(newName!==old&&!DATA.hocVien.some(x=>x.tenHocVien===newName)){st.tenHocVien=newName;if(AI[old]){AI[newName]=AI[old];delete AI[old]}if(MANUAL[currentClassKey]?.[old]){MANUAL[currentClassKey][newName]=MANUAL[currentClassKey][old];delete MANUAL[currentClassKey][old]}current=newName}DATA.tenLop=String(f.get("class")||DATA.tenLop).trim();DATA.thang=String(f.get("month")||DATA.thang).trim();DATA.__manualSubject=String(f.get("subject")||"").trim();const teacher=String(f.get("teacher")||"").trim(),center=String(f.get("center")||"").trim();CLASS_META[currentClassKey]??={};CLASS_META[currentClassKey].teacher=teacher;CLASS_META[currentClassKey].center=center;addOption($("#teacher"),teacher);addOption($("#center"),center);$("#teacher").value=teacher;$("#center").value=center;localStorage.setItem(`oiec_teacher_${currentClassKey}`,teacher);localStorage.setItem(`oiec_center_${currentClassKey}`,center);(DATA.noiDungThang||[]).forEach((x,i)=>{x.ngayHoc=String(f.get(`date_${i}`)||"").trim();x.tenBaiHoc=String(f.get(`title_${i}`)||"").trim();x.noiDungBaiHoc=String(f.get(`content_${i}`)||"").trim()});MANUAL[currentClassKey]??={};const m=MANUAL[currentClassKey][current]??={};m.chuyenMon=[0,1,2,3,4].map(i=>String(f.get(`pro_${i}`)||"").trim());m.kienThucLapTrinh=String(f.get("knowledge")||"").trim();m.kyNangRobotics=String(f.get("skill")||"").trim();m.sanPhamDuAn=String(f.get("project")||"").trim();saveManual();localStorage.setItem(`oiec_ai_${currentClassKey}`,JSON.stringify(AI));$("#studentSelect").innerHTML=DATA.hocVien.map(x=>`<option>${esc(x.tenHocVien)}</option>`).join("");$("#studentSelect").value=current;closeEditor();renderStudent()}
+$("#editBtn").onclick=openEditor;$("#editClose").onclick=closeEditor;$("#editCancel").onclick=closeEditor;$("#editSave").onclick=saveEditor;
 let FAILED_BATCHES=[];
 
 function subjectOfData(d){
@@ -403,10 +306,7 @@ async function retryFailedBatch(index,button){
      headers:{"Content-Type":"application/json"},
      body:JSON.stringify({data:retryData,subject:subjectOfData(d)})
    });
-   const raw=await r.text();
-   let out;
-   try{out=JSON.parse(raw)}
-   catch(_){out={error:raw.slice(0,180)||`HTTP ${r.status}`,students:{},failed:[{batch:f.batch,names:f.names,error:raw.slice(0,180)||`HTTP ${r.status}`}]}};
+   const raw=await r.text();let out;try{out=JSON.parse(raw)}catch(_){out={error:raw.slice(0,180)||`HTTP ${r.status}`,students:{},failed:[{batch:f.batch,names:f.names,error:raw.slice(0,180)||`HTTP ${r.status}`}]} };
    const k=f.classKey;
    if(out.students && Object.keys(out.students).length){
      CLASS_AI[k]={...(CLASS_AI[k]||{}),...out.students};
@@ -463,35 +363,40 @@ $("#aiBtn").onclick=async()=>{
          headers:{"Content-Type":"application/json"},
          body:JSON.stringify({data:d,subject:subjectOfData(d)})
        });
-       const raw=await r.text();
-       let out;
-       try{out=JSON.parse(raw)}
-       catch(_){
-         // Nếu Vercel/API trả text thay vì JSON, vẫn tạo retry theo batch 5 bé.
-         out={error:raw.slice(0,180)||`HTTP ${r.status}`,students:{},failed:[]};
-         const bs=[];
-         for(let i=0;i<d.hocVien.length;i+=5)bs.push(d.hocVien.slice(i,i+5));
-         out.failed=bs.map((b,i)=>({batch:i+1,names:b.map(s=>s.tenHocVien),error:out.error}));
-       }
-       CLASS_AI[k]={...(CLASS_AI[k]||{}),...(out.students||{})};
-       localStorage.setItem(`oiec_ai_${k}`,JSON.stringify(CLASS_AI[k]));
-       const newly=Object.keys(out.students||{}).length;
-       done+=newly;
-
-       if(out.failed?.length){
-         for(const fb of out.failed){
-           FAILED_BATCHES.push({
-             classKey:k,
-             className:d.tenLop,
-             batch:fb.batch,
-             names:[...(fb.names||[])],
-             error:fb.error||out.error||"lỗi AI"
-           });
+       const raw=await r.text();let out;try{out=JSON.parse(raw)}catch(_){out={error:raw.slice(0,180)||`HTTP ${r.status}`,students:{},failed:[]}};
+       if(!r.ok){
+         if(!out.failed?.length){const bs=[];for(let bi=0;bi<d.hocVien.length;bi+=5)bs.push(d.hocVien.slice(bi,bi+5));out.failed=bs.map((b,bi)=>({batch:bi+1,names:b.map(s=>s.tenHocVien),error:out.error||`HTTP ${r.status}`}))}
+         if(out.failed?.length){
+           for(const fb of out.failed){
+             FAILED_BATCHES.push({
+               classKey:k,
+               className:d.tenLop,
+               batch:fb.batch,
+               names:[...(fb.names||[])],
+               error:fb.error||out.error||"lỗi AI"
+             });
+           }
+           renderFailedBatches();
          }
-         renderFailedBatches();
-         failed.push(`${d.tenLop}: ${newly}/${d.hocVien.length} học viên; ${out.failed.map(x=>x.error).join(" | ")}`);
-       }else if(!r.ok){
          failed.push(`${d.tenLop}: ${out.error||"lỗi AI"}`);
+       }else{
+         CLASS_AI[k]={...(CLASS_AI[k]||{}),...(out.students||{})};
+         localStorage.setItem(`oiec_ai_${k}`,JSON.stringify(CLASS_AI[k]));
+         const newly=Object.keys(out.students||{}).length;
+         done+=newly;
+         if(out.failed?.length){
+           for(const fb of out.failed){
+             FAILED_BATCHES.push({
+               classKey:k,
+               className:d.tenLop,
+               batch:fb.batch,
+               names:[...(fb.names||[])],
+               error:fb.error||"lỗi AI"
+             });
+           }
+           renderFailedBatches();
+           failed.push(`${d.tenLop}: ${newly}/${d.hocVien.length} học viên; ${out.failed.map(x=>x.error).join(" | ")}`);
+         }
        }
      }catch(e){
        failed.push(`${d.tenLop}: ${e.message}`);
