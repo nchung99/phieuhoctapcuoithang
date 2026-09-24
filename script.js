@@ -9,8 +9,13 @@ function esc(s){return String(s??"").replace(/[&<>"\']/g,m=>({"&":"&amp;","<":"&
 function classKey(d){return `${d?.tenLop||"Lop"}__${d?.thang||""}`}
 function classCode(name){
  const s=String(name||"LOP").trim();
- const m=s.match(/\b([A-Za-z]{1,6}\d{1,4})\b/);
- return safeFileName(m?m[1]:s.split(/\s*-\s*/)[0]||s);
+ // EMS có thể thêm nhóm tuổi sau mã lớp, ví dụ:
+ // TC-KPRBT03-0029 (>= 7 tuổi) -> TC-KPRBT03-0029
+ // TC-KPRBT03-0028 (5 - 6 tuổi) -> TC-KPRBT03-0028
+ const withoutAge=s.replace(/\s*\([^)]*(?:tuổi|tuoi)[^)]*\)\s*$/i,"").trim();
+ // Ưu tiên toàn bộ mã có dấu gạch nối, không chỉ phần KPRBT03.
+ const m=withoutAge.match(/[A-Za-z0-9]+(?:-[A-Za-z0-9]+)+/);
+ return safeFileName(m?m[0]:withoutAge);
 }
 function saveCurrentMeta(){
  if(!currentClassKey)return;
@@ -262,9 +267,13 @@ $("#aiBtn").onclick=async()=>{
    });
    const out=await r.json();
    if(!r.ok){failed.push(`${d.tenLop}: ${out.error||"lỗi AI"}`);continue}
-   CLASS_AI[k]=out.students||{};
+   CLASS_AI[k]={...(CLASS_AI[k]||{}),...(out.students||{})};
    localStorage.setItem(`oiec_ai_${k}`,JSON.stringify(CLASS_AI[k]));
-   done+=Object.keys(CLASS_AI[k]).length;
+   const newly=Object.keys(out.students||{}).length;
+   done+=newly;
+   if(out.failed?.length){
+     failed.push(`${d.tenLop}: ${newly}/${d.hocVien.length} học viên; ${out.failed.map(x=>x.error).join(" | ")}`);
+   }
   }
   currentClassKey=$("#classSelect").value;
   syncCurrentClass();

@@ -26,80 +26,84 @@ async function gemini(key,prompt){
  throw Error(last||"Gemini lỗi");
 }
 
-function promptFor(common,student,subject){
+function promptForBatch(common,students,subject){
+ const names=students.map(s=>s.tenHocVien);
  return `Bạn là giáo viên KAPLA viết phiếu đánh giá học tập OIEC THEO THÁNG.
 
-Hãy đánh giá RIÊNG học viên dưới đây dựa trên dữ liệu thực tế của 4 tuần. Không dùng nhận xét chung cho cả lớp.
+Hãy đánh giá RIÊNG TỪNG học viên trong batch dưới đây dựa trên dữ liệu thực tế 4 tuần.
+Mỗi học viên phải được xử lý độc lập; tuyệt đối không sao chép cùng một nhận xét rồi chỉ thay tên.
 
 NGUYÊN TẮC:
-- Chỉ dùng thông tin có trong dữ liệu: bài học, điểm danh, điểm số, nhận xét giáo viên.
-- Buổi vắng không được tính như điểm thấp. Nếu tham gia 3/4 buổi thì đánh giá trên 3 buổi đã học và hiểu rằng học viên tham gia 3/4.
-- So sánh chuỗi điểm và nhận xét theo thời gian để nhận biết tiến bộ.
-- Không tự bịa việc lắp ráp robot, làm việc nhóm, thái độ, sáng tạo... nếu dữ liệu không cho thấy điều đó.
-- Thang điểm tiêu chí chung cần phù hợp với phiếu đánh giá gửi phụ huynh:
-  + 5: thể hiện tốt, tích cực hoặc có tiến bộ rõ; ưu tiên mức 5 khi điểm số/nhận xét cho thấy kết quả tốt.
-  + 4: mức mặc định phù hợp với học viên tham gia và học tập ổn định, không có dấu hiệu tiêu cực.
-  + 3: chỉ dùng khi nhận xét hoặc kết quả thực tế cho thấy tiêu chí đó cần cải thiện rõ ràng.
-  + 1-2: chỉ dùng khi có bằng chứng rất rõ về khó khăn/hạn chế đáng kể; không dùng chỉ vì thiếu dữ liệu.
-- Mặt bằng điểm nên chủ yếu ở 4-5 nếu học viên học tập bình thường/tốt. Không hạ xuống 3 chỉ vì dữ liệu không nhắc trực tiếp tiêu chí.
-- mucDoHoanThien bắt buộc trả về CHÍNH XÁC một trong ba chuỗi: "Đạt tối thiểu", "Đúng yêu cầu", "Có sáng tạo". Không thêm giải thích vào field này.
-- Không được tự động cho 3 chỉ vì nhận xét giáo viên không nhắc trực tiếp một tiêu chí. Hãy kết hợp điểm số, mức độ ổn định, sự tham gia và nhận xét của các buổi; nếu kết quả học tập ổn định/tích cực và không có dấu hiệu tiêu cực thì có thể dùng mức 4.
-- Điểm 5 vẫn cần tín hiệu tích cực rõ ràng; không chấm tất cả học viên giống nhau.
-- Câu chữ tự nhiên như giáo viên viết, ngắn gọn, tránh văn phong AI/sáo rỗng.
-- Các học viên có dữ liệu khác nhau phải có nội dung khác nhau; không chỉ thay tên trong cùng một mẫu.
-- Bộ môn của báo cáo: ${subject}.
+- Chỉ dùng dữ liệu có thật: bài học, điểm danh, điểm số, nhận xét giáo viên.
+- Buổi vắng KHÔNG phải điểm thấp. Đánh giá trên các buổi học viên thực sự tham gia.
+- Xem chuỗi điểm/nhận xét theo thời gian để nhận biết tiến bộ.
+- Không tự bịa hành vi, làm việc nhóm, đạo đức, sáng tạo, lắp ráp... nếu dữ liệu không hỗ trợ.
+- Câu chữ ngắn, tự nhiên như giáo viên viết.
+- Bộ môn: ${subject}.
+- Điểm tiêu chí chung nên chủ yếu 4-5 khi học viên học bình thường/tốt:
+  + 5: kết quả/nhận xét tích cực rõ, thể hiện tốt hoặc có tiến bộ.
+  + 4: học ổn định, không có dấu hiệu tiêu cực; đây là mức thông thường.
+  + 3: chỉ khi có căn cứ rõ là cần cải thiện.
+  + 1-2: chỉ khi có bằng chứng rất rõ về khó khăn/hạn chế đáng kể.
+- Không hạ xuống 3 chỉ vì nhận xét không nhắc trực tiếp tiêu chí.
+- mucDoHoanThien bắt buộc CHÍNH XÁC một trong: "Đạt tối thiểu", "Đúng yêu cầu", "Có sáng tạo".
 
-Trả về JSON THUẦN đúng cấu trúc:
+Trả về JSON THUẦN, không markdown, đúng dạng:
 {
- "chuyenMon":[
-  "nhận xét tư duy Logic trong lập trình",
-  "nhận xét kỹ năng phân tích và xử lý vấn đề",
-  "nhận xét khả năng sáng tạo",
-  "nhận xét tiếp thu kiến thức và ghi nhớ",
-  "nhận xét khả năng làm việc nhóm"
- ],
- "kienThucLapTrinh":"2-3 câu về kiến thức/lập trình thực tế trong tháng",
- "kyNangRobotics":"2-3 câu về kỹ năng theo bộ môn thực tế",
- "sanPhamDuAn":"2-3 câu về sản phẩm/dự án thực tế",
- "mucDoHoanThien":"Đúng yêu cầu",
- "diemTieuChi":{
-  "Thái độ & tinh thần học tập":1,
-  "Kỹ năng hợp tác & giao tiếp":1,
-  "Kỹ năng thực hành & sáng tạo":1,
-  "Tính kiên trì & tự giác":1,
-  "Khả năng tiếp thu & vận dụng kiến thức":1,
-  "Tiến bộ cá nhân & đạo đức":1
+ "students":{
+   "TÊN HỌC VIÊN":{
+     "chuyenMon":[
+       "nhận xét tư duy Logic trong lập trình",
+       "nhận xét kỹ năng phân tích và xử lý vấn đề",
+       "nhận xét khả năng sáng tạo",
+       "nhận xét tiếp thu kiến thức và ghi nhớ",
+       "nhận xét khả năng làm việc nhóm"
+     ],
+     "kienThucLapTrinh":"2-3 câu",
+     "kyNangRobotics":"2-3 câu theo bộ môn thực tế",
+     "sanPhamDuAn":"2-3 câu",
+     "mucDoHoanThien":"Đúng yêu cầu",
+     "diemTieuChi":{
+       "Thái độ & tinh thần học tập":4,
+       "Kỹ năng hợp tác & giao tiếp":4,
+       "Kỹ năng thực hành & sáng tạo":4,
+       "Tính kiên trì & tự giác":4,
+       "Khả năng tiếp thu & vận dụng kiến thức":4,
+       "Tiến bộ cá nhân & đạo đức":4
+     }
+   }
  }
 }
 
-Điểm tiêu chí là số nguyên 1-5. Không thêm field khác.
+Phải có ĐỦ và ĐÚNG các key tên sau: ${JSON.stringify(names)}
 
 THÔNG TIN THÁNG:
 ${JSON.stringify(common)}
 
-DỮ LIỆU RIÊNG HỌC VIÊN:
-${JSON.stringify(student)}`;
+DỮ LIỆU CÁC HỌC VIÊN:
+${JSON.stringify(students)}`;
 }
 
-async function runWithConcurrency(items,limit,worker){
- const results=new Array(items.length);
- let next=0;
- async function runner(){
-  while(true){
-   const i=next++;
-   if(i>=items.length)return;
-   results[i]=await worker(items[i],i);
-  }
- }
- await Promise.all(Array.from({length:Math.min(limit,items.length)},runner));
- return results;
+function chunks(arr,size){
+ const out=[];
+ for(let i=0;i<arr.length;i+=size)out.push(arr.slice(i,i+size));
+ return out;
 }
 
-async function generateStudent(key,common,student,subject){
+async function generateBatch(key,common,students,subject){
  let last;
  for(let attempt=0;attempt<2;attempt++){
-  try{return await gemini(key,promptFor(common,student,subject))}
-  catch(e){last=e;if(attempt===0)await new Promise(r=>setTimeout(r,700))}
+  try{
+   const result=await gemini(key,promptForBatch(common,students,subject));
+   const map=result?.students||{};
+   for(const s of students){
+    if(!map[s.tenHocVien]) throw Error(`AI thiếu kết quả của ${s.tenHocVien}`);
+   }
+   return map;
+  }catch(e){
+   last=e;
+   if(attempt===0)await new Promise(r=>setTimeout(r,900));
+  }
  }
  throw last;
 }
@@ -108,16 +112,50 @@ export default async function handler(req,res){
  if(req.method!=="POST")return res.status(405).json({error:"Method not allowed"});
  const key=process.env.GEMINI_API_KEY;
  if(!key)return res.status(500).json({error:"Chưa cấu hình GEMINI_API_KEY trên Vercel."});
- const data=req.body?.data,subject=req.body?.subject||"Coding / Robotics";
+
+ const data=req.body?.data;
+ const subject=req.body?.subject||"Coding / Robotics";
  if(!data?.hocVien?.length)return res.status(400).json({error:"Không có dữ liệu học viên."});
- const common={tenLop:data.tenLop,thang:data.thang,soBuoi:data.soBuoi,noiDungThang:data.noiDungThang};
- try{
-  const pairs=await runWithConcurrency(data.hocVien,4,async student=>{
-   const result=await generateStudent(key,common,student,subject);
-   return [student.tenHocVien,result];
-  });
-  return res.status(200).json({students:Object.fromEntries(pairs)});
- }catch(e){
-  return res.status(500).json({error:e.message});
+
+ const common={
+  tenLop:data.tenLop,
+  thang:data.thang,
+  soBuoi:data.soBuoi,
+  noiDungThang:data.noiDungThang
+ };
+
+ // 5 học viên / 1 Gemini request:
+ // 19 học viên ~= 4 request thay vì 19 request.
+ const BATCH_SIZE=5;
+ const batches=chunks(data.hocVien,BATCH_SIZE);
+ const students={};
+ const failed=[];
+
+ for(let i=0;i<batches.length;i++){
+  try{
+   Object.assign(students,await generateBatch(key,common,batches[i],subject));
+  }catch(e){
+   failed.push({
+    batch:i+1,
+    names:batches[i].map(s=>s.tenHocVien),
+    error:e.message
+   });
+   // Nếu quota đã hết thì dừng ngay để không đốt thêm request.
+   if(/quota|rate.?limit|429|RESOURCE_EXHAUSTED/i.test(e.message||""))break;
+  }
  }
+
+ const completed=Object.keys(students).length;
+ if(!completed){
+  const msg=failed[0]?.error||"Không tạo được đánh giá AI.";
+  return res.status(429).json({error:msg,students:{},failed});
+ }
+
+ // Trả partial success để client lưu được các batch đã xong.
+ return res.status(200).json({
+  students,
+  completed,
+  total:data.hocVien.length,
+  failed
+ });
 }

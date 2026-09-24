@@ -64,3 +64,18 @@ v5.2.1 FIX COMPLETION/PDF
 - Khi ZIP nhiều học viên/lớp, mỗi học viên được render lại đúng AI + chỉnh tay riêng.
 - Manual điểm và mức hoàn thiện được load đúng theo từng lớp khi export.
 - Giữ mặt bằng điểm AI chủ yếu 4-5.
+
+v5.3 TRUE BATCH AI
+- 5 học viên dùng chung 1 Gemini request thay vì 1 request/học viên.
+- Ví dụ 19 học viên chỉ khoảng 4 request cho một lớp.
+- Mỗi học viên vẫn có dữ liệu riêng và kết quả riêng trong JSON response.
+- Retry theo batch; nếu quota/rate-limit thì dừng để không đốt thêm request.
+- Batch đã thành công được lưu ngay/merge vào localStorage, không mất kết quả cũ.
+- Giữ fix completion tick/PDF, manual score/completion, Multi-Class và ZIP riêng từng lớp.
+
+v5.3.1
+- ZIP dùng đầy đủ mã lớp thay vì chỉ phần mã ngắn.
+- Ví dụ:
+  TC-KPRBT03-0029 (>= 7 tuổi) -> TC-KPRBT03-0029.zip
+  TC-KPRBT03-0028 (5 - 6 tuổi) -> TC-KPRBT03-0028.zip
+- PDF bên trong vẫn giữ tên học viên, ví dụ Nguyễn Công Hưng.pdf.
