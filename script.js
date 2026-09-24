@@ -283,6 +283,7 @@ function saveEdit(){
  $("#studentSelect").innerHTML=DATA.hocVien.map(x=>`<option>${esc(x.tenHocVien)}</option>`).join("");$("#studentSelect").value=current;$("#classInfo").textContent=DATA.tenLop;$("#monthInfo").textContent=DATA.thang;$("#subjectInfo").textContent=subject();closeEdit();renderStudent();
 }
 $("#editBtn").onclick=openEdit;$("#editClose").onclick=closeEdit;$("#editCancel").onclick=closeEdit;$("#editSave").onclick=saveEdit;
+$("#editModal").addEventListener("click",e=>{if(e.target===$("#editModal"))closeEdit()});
 let FAILED_BATCHES=[];
 
 function subjectOfData(d){
