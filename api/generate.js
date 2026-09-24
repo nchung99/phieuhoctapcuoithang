@@ -46,7 +46,7 @@ NGUYÊN TẮC:
   + 3: chỉ khi có căn cứ rõ là cần cải thiện.
   + 1-2: chỉ khi có bằng chứng rất rõ về khó khăn/hạn chế đáng kể.
 - Không hạ xuống 3 chỉ vì nhận xét không nhắc trực tiếp tiêu chí.
-- mucDoHoanThien bắt buộc CHÍNH XÁC một trong: "Đạt tối thiểu", "Đúng yêu cầu", "Có sáng tạo".
+- mucDoHoanThien bắt buộc CHÍNH XÁC một trong hai giá trị: "Đúng yêu cầu", "Có sáng tạo". Không được trả về "Đạt tối thiểu".
 
 Trả về JSON THUẦN, không markdown, đúng dạng:
 {

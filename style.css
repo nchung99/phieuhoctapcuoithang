@@ -721,3 +721,75 @@
 /* v5.2.1 PDF safety */
 .criteria tbody td{height:6mm!important;padding:.5mm .7mm!important}
 .footer{padding-top:.4mm!important;padding-bottom:.2mm!important}
+
+/* =========================================================
+   v5.4 - Fill A4 more evenly without overflowing
+   ========================================================= */
+.report{
+  display:flex!important;
+  flex-direction:column!important;
+  height:297mm!important;
+  min-height:297mm!important;
+  max-height:297mm!important;
+}
+
+/* Give the content breathing room again, but keep safe A4 bounds */
+.monthly-hero{
+  height:25mm!important;
+  min-height:25mm!important;
+  padding:3.5mm 8mm!important;
+}
+.m-section{
+  margin-top:3.4mm!important;
+}
+.m-title{
+  margin-bottom:2.1mm!important;
+}
+.student-grid{gap:2.2mm 7mm!important}
+.field{
+  min-height:8.2mm!important;
+  padding:1.8mm 2.4mm!important;
+}
+.month-lessons{gap:2.2mm 4mm!important}
+.month-lesson{
+  min-height:12.4mm!important;
+  padding:2.1mm 2.3mm!important;
+}
+.month-lesson span{line-height:1.28!important}
+
+.professional-cards{
+  padding:2.4mm 3.2mm 2.4mm 5mm!important;
+}
+.pro-card{
+  padding:.75mm 0!important;
+  line-height:1.27!important;
+}
+.ability-card{
+  min-height:27mm!important;
+}
+.ability-card>div:not(.completion){
+  padding:2.5mm!important;
+  line-height:1.28!important;
+}
+.completion{
+  min-height:8mm!important;
+  padding:2mm 2.2mm!important;
+}
+
+/* Use some of the remaining page height in the criteria section */
+.criteria tbody td{
+  height:8mm!important;
+  padding:1mm .8mm!important;
+  line-height:1.15!important;
+}
+.score-circle{
+  width:5.5mm!important;
+  height:5.5mm!important;
+}
+
+/* Footer stays at bottom; no giant dead area below criteria */
+.footer{
+  margin-top:auto!important;
+  padding-top:1.2mm!important;
+  padding-bottom:.5mm!important;
+}

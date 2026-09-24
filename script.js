@@ -112,6 +112,9 @@ function renderStudent(){
    x.checked=yes;
    if(yes)x.setAttribute("checked","checked"); else x.removeAttribute("checked");
  });
+ document.querySelectorAll('.completion label').forEach(lab=>{
+   if(lab.textContent.trim()==="Đạt tối thiểu") lab.style.display="none";
+ });
  Object.keys(scoreState).forEach(k=>delete scoreState[k]);
  if(a.diemTieuChi)Object.entries(a.diemTieuChi).forEach(([k,v])=>scoreState[k]=v);
  renderCriteria();
@@ -196,7 +199,7 @@ document.addEventListener("click",e=>{
  const lab=e.target.closest(".completion label");
  if(lab && DATA && current){
    const value=lab.textContent.trim();
-   if(["Đạt tối thiểu","Đúng yêu cầu","Có sáng tạo"].includes(value)){
+   if(["Đúng yêu cầu","Có sáng tạo"].includes(value)){
      manualStudent().mucDoHoanThien=value;
      saveManual();renderStudent();
    }

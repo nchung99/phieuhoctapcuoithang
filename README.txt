@@ -79,3 +79,10 @@ v5.3.1
   TC-KPRBT03-0029 (>= 7 tuổi) -> TC-KPRBT03-0029.zip
   TC-KPRBT03-0028 (5 - 6 tuổi) -> TC-KPRBT03-0028.zip
 - PDF bên trong vẫn giữ tên học viên, ví dụ Nguyễn Công Hưng.pdf.
+
+v5.4 BALANCED FINAL
+- Phân bố lại chiều cao toàn phiếu để giảm khoảng trắng lớn cuối trang.
+- Nới khoảng cách section, ô nội dung, nhận xét, năng lực và từng dòng tiêu chí.
+- Vẫn khóa đúng 1 trang A4.
+- Mức độ hoàn thiện chỉ còn: Đúng yêu cầu / Có sáng tạo.
+- AI bị cấm trả về Đạt tối thiểu; lựa chọn này cũng được ẩn khỏi phiếu.
