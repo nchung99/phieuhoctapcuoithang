@@ -1,6 +1,7 @@
 const $=s=>document.querySelector(s);
 let DATA=null, AI={}, current=null;
 let CLASSES=[], CLASS_AI={}, CLASS_META={}, currentClassKey=null;
+let MANUAL={};
 const criteria=["Thái độ & tinh thần học tập","Kỹ năng hợp tác & giao tiếp","Kỹ năng thực hành & sáng tạo","Tính kiên trì & tự giác","Khả năng tiếp thu & vận dụng kiến thức","Tiến bộ cá nhân & đạo đức"];
 const scoreState={};
 function esc(s){return String(s??"").replace(/[&<>"\']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\'":"&#039;"}[m]))}
@@ -78,7 +79,10 @@ function renderCriteria(){
 function renderStudent(){
  if(!DATA||!current)return;
  const s=DATA.hocVien.find(x=>x.tenHocVien===current); if(!s)return;
- const sub=subject(), a=AI[current]||{};
+ const sub=subject();
+ const baseAI=AI[current]||{};
+ const manual=MANUAL[currentClassKey]?.[current]||{};
+ const a={...baseAI,...manual,diemTieuChi:{...(baseAI.diemTieuChi||{}),...(manual.diemTieuChi||{})}};
  $("#rTeacher").textContent=selectedTeacher()||"—";
  $("#rCenter").textContent=selectedCenter()||"—";
  $("#rStudent").textContent=s.tenHocVien;
@@ -98,7 +102,11 @@ function renderStudent(){
  $("#knowledgeText").innerHTML=esc(a.kienThucLapTrinh||"—").replace(/\n/g,"<br>");
  $("#roboticsText").innerHTML=esc(a.kyNangRobotics||"—").replace(/\n/g,"<br>");
  $("#projectText").innerHTML=esc(a.sanPhamDuAn||"—").replace(/\n/g,"<br>");
- document.querySelectorAll('input[name="completion"]').forEach(x=>x.checked=(x.value===a.mucDoHoanThien));
+ document.querySelectorAll('input[name="completion"]').forEach(x=>{
+   const yes=x.value===a.mucDoHoanThien;
+   x.checked=yes;
+   if(yes)x.setAttribute("checked","checked"); else x.removeAttribute("checked");
+ });
  Object.keys(scoreState).forEach(k=>delete scoreState[k]);
  if(a.diemTieuChi)Object.entries(a.diemTieuChi).forEach(([k,v])=>scoreState[k]=v);
  renderCriteria();
@@ -158,6 +166,38 @@ const oldTeacher=localStorage.getItem("oiec_teacher")||"";
 if(oldTeacher){addOption($("#teacher"),oldTeacher);$("#teacher").value=oldTeacher}
 const oldCenter=localStorage.getItem("oiec_center")||"";
 if(oldCenter){addOption($("#center"),oldCenter);$("#center").value=oldCenter}
+
+function saveManual(){
+ if(!currentClassKey||!current)return;
+ localStorage.setItem(`oiec_manual_${currentClassKey}`,JSON.stringify(MANUAL[currentClassKey]||{}));
+}
+function manualStudent(){
+ MANUAL[currentClassKey]??={};
+ MANUAL[currentClassKey][current]??={};
+ return MANUAL[currentClassKey][current];
+}
+document.addEventListener("click",e=>{
+ const circle=e.target.closest(".score-circle");
+ if(circle && DATA && current){
+   const row=circle.closest("tr");
+   const criterion=row?.querySelector("td:first-child")?.textContent?.trim();
+   const score=Number(circle.dataset.score);
+   if(criterion && score>=1 && score<=5){
+     const m=manualStudent();m.diemTieuChi??={};m.diemTieuChi[criterion]=score;
+     saveManual();renderStudent();
+   }
+   return;
+ }
+ const lab=e.target.closest(".completion label");
+ if(lab && DATA && current){
+   const value=lab.textContent.trim();
+   if(["Đạt tối thiểu","Đúng yêu cầu","Có sáng tạo"].includes(value)){
+     manualStudent().mucDoHoanThien=value;
+     saveManual();renderStudent();
+   }
+ }
+});
+
 $("#jsonFile").onchange=async e=>{
  try{
   const files=[...e.target.files];
@@ -175,6 +215,7 @@ $("#jsonFile").onchange=async e=>{
   for(const d of CLASSES){
    const k=classKey(d);
    try{CLASS_AI[k]=JSON.parse(localStorage.getItem(`oiec_ai_${k}`)||"{}")}catch(_){CLASS_AI[k]={}}
+   try{MANUAL[k]=JSON.parse(localStorage.getItem(`oiec_manual_${k}`)||"{}")}catch(_){MANUAL[k]={}}
    CLASS_META[k]={
     teacher:localStorage.getItem(`oiec_teacher_${k}`)||selectedTeacher()||"",
     center:localStorage.getItem(`oiec_center_${k}`)||selectedCenter()||""
@@ -247,6 +288,9 @@ function getAllCSS(){
 }
 
 function reportHTML(){
+ document.querySelectorAll('input[name="completion"]').forEach(x=>{
+   if(x.checked)x.setAttribute("checked","checked"); else x.removeAttribute("checked");
+ });
  const report=$("#report").cloneNode(true);
  report.classList.add("pdf-server");
  const css=getAllCSS();
@@ -272,6 +316,9 @@ async function downloadClassZip(d,classIndex,totalClasses){
  const k=classKey(d);
  DATA=d; AI=CLASS_AI[k]||{};
  currentClassKey=k;
+ if(!MANUAL[k]){
+   try{MANUAL[k]=JSON.parse(localStorage.getItem(`oiec_manual_${k}`)||"{}")}catch(_){MANUAL[k]={}}
+ }
  const reports=[];
  for(let i=0;i<d.hocVien.length;i++){
    const name=d.hocVien[i].tenHocVien;

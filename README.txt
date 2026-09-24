@@ -50,3 +50,17 @@ v5.1.1 BALANCED LAYOUT
 - Header lớn hơn v5.0 một chút nhưng vẫn gọn.
 - Bảng tiêu chí không còn dồn sát.
 - Footer neo xuống đáy, tổng thể phân bố đều hơn và giảm khoảng trắng lớn cuối trang.
+
+v5.2
+- Fix dòng cuối bảng tiêu chí bị cắt khỏi A4.
+- AI ưu tiên mặt bằng 4-5 cho học viên học ổn định/tốt.
+- Click vòng tròn 1-5 để sửa điểm sau AI.
+- Click mức hoàn thiện để sửa Đạt tối thiểu / Đúng yêu cầu / Có sáng tạo.
+- Chỉnh tay lưu theo lớp + học viên và dùng khi xuất PDF.
+
+v5.2.1 FIX COMPLETION/PDF
+- Fix mức độ hoàn thiện không tick: render dùng đúng AI + manual override.
+- Fix radio tick bị mất khi xuất PDF: đồng bộ checked property thành checked attribute trước khi clone HTML.
+- Khi ZIP nhiều học viên/lớp, mỗi học viên được render lại đúng AI + chỉnh tay riêng.
+- Manual điểm và mức hoàn thiện được load đúng theo từng lớp khi export.
+- Giữ mặt bằng điểm AI chủ yếu 4-5.

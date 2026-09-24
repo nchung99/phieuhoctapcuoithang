@@ -37,10 +37,12 @@ NGUYÊN TẮC:
 - So sánh chuỗi điểm và nhận xét theo thời gian để nhận biết tiến bộ.
 - Không tự bịa việc lắp ráp robot, làm việc nhóm, thái độ, sáng tạo... nếu dữ liệu không cho thấy điều đó.
 - Thang điểm tiêu chí chung cần phù hợp với phiếu đánh giá gửi phụ huynh:
-  + 5: thể hiện tốt/nổi bật hoặc duy trì kết quả rất tốt, có bằng chứng tích cực rõ.
-  + 4: đạt tốt/ổn định; đây là mức phù hợp khi học viên học đều, điểm số tốt và không có dấu hiệu tiêu cực.
-  + 3: chỉ dùng khi dữ liệu cho thấy tiêu chí ở mức trung bình hoặc có điểm cần cải thiện rõ.
-  + 1-2: chỉ dùng khi dữ liệu thực sự có bằng chứng về khó khăn/hạn chế đáng kể.
+  + 5: thể hiện tốt, tích cực hoặc có tiến bộ rõ; ưu tiên mức 5 khi điểm số/nhận xét cho thấy kết quả tốt.
+  + 4: mức mặc định phù hợp với học viên tham gia và học tập ổn định, không có dấu hiệu tiêu cực.
+  + 3: chỉ dùng khi nhận xét hoặc kết quả thực tế cho thấy tiêu chí đó cần cải thiện rõ ràng.
+  + 1-2: chỉ dùng khi có bằng chứng rất rõ về khó khăn/hạn chế đáng kể; không dùng chỉ vì thiếu dữ liệu.
+- Mặt bằng điểm nên chủ yếu ở 4-5 nếu học viên học tập bình thường/tốt. Không hạ xuống 3 chỉ vì dữ liệu không nhắc trực tiếp tiêu chí.
+- mucDoHoanThien bắt buộc trả về CHÍNH XÁC một trong ba chuỗi: "Đạt tối thiểu", "Đúng yêu cầu", "Có sáng tạo". Không thêm giải thích vào field này.
 - Không được tự động cho 3 chỉ vì nhận xét giáo viên không nhắc trực tiếp một tiêu chí. Hãy kết hợp điểm số, mức độ ổn định, sự tham gia và nhận xét của các buổi; nếu kết quả học tập ổn định/tích cực và không có dấu hiệu tiêu cực thì có thể dùng mức 4.
 - Điểm 5 vẫn cần tín hiệu tích cực rõ ràng; không chấm tất cả học viên giống nhau.
 - Câu chữ tự nhiên như giáo viên viết, ngắn gọn, tránh văn phong AI/sáo rỗng.
@@ -59,7 +61,7 @@ Trả về JSON THUẦN đúng cấu trúc:
  "kienThucLapTrinh":"2-3 câu về kiến thức/lập trình thực tế trong tháng",
  "kyNangRobotics":"2-3 câu về kỹ năng theo bộ môn thực tế",
  "sanPhamDuAn":"2-3 câu về sản phẩm/dự án thực tế",
- "mucDoHoanThien":"Đạt tối thiểu hoặc Đúng yêu cầu hoặc Có sáng tạo",
+ "mucDoHoanThien":"Đúng yêu cầu",
  "diemTieuChi":{
   "Thái độ & tinh thần học tập":1,
   "Kỹ năng hợp tác & giao tiếp":1,

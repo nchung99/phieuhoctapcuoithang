@@ -702,3 +702,22 @@
     overflow:hidden!important;
   }
 }
+
+/* v5.2 - vừa 1 trang + chỉnh tay điểm/mức hoàn thiện */
+.monthly-hero{height:24mm!important;min-height:24mm!important;padding:3.2mm 8mm!important}
+.m-section{margin-top:2.6mm!important}
+.m-title{margin-bottom:1.6mm!important}
+.month-lesson{min-height:11.3mm!important}
+.professional-cards{padding:1.8mm 3.2mm 1.8mm 5mm!important}
+.pro-card{padding:.5mm 0!important}
+.ability-card{min-height:24.5mm!important}
+.criteria tbody td{height:6.2mm!important;padding:.55mm .7mm!important}
+.score-circle{cursor:pointer!important}
+.score-circle:hover{background:#fff2f2!important}
+.completion label{cursor:pointer!important;border-radius:4px;padding:.4mm .8mm}
+.completion label:hover{background:#fff2f2!important}
+.footer{padding-top:.7mm!important;padding-bottom:.3mm!important}
+
+/* v5.2.1 PDF safety */
+.criteria tbody td{height:6mm!important;padding:.5mm .7mm!important}
+.footer{padding-top:.4mm!important;padding-bottom:.2mm!important}
