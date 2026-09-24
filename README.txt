@@ -117,3 +117,20 @@ v5.6 MULTI-MODEL WORKER
   gemini-3.6-flash
 - Nếu model được chọn lỗi/quota, chính batch đó thử lần lượt các model còn lại.
 - Dùng chung GEMINI_API_KEY; không cần thêm key.
+
+v5.7 RETRY FAILED BATCH
+- Batch lỗi không chặn batch sau; các batch khác vẫn tiếp tục.
+- Web hiện nút Retry riêng cho từng batch lỗi, có tên lớp + số batch.
+- Retry chỉ gửi lại đúng danh sách học viên của batch lỗi (tối đa 5), không chạy lại batch đã thành công.
+- Kết quả retry merge về đúng classKey và lưu localStorage.
+- Multi-worker + multi-model của v5.6 giữ nguyên.
+
+v5.8 EDIT ALL
+- Click trực tiếp nội dung trên phiếu để sửa.
+- Sửa được: tên học viên, lớp, giáo viên, center, bộ môn, tháng, thời lượng.
+- Sửa được từng tuần: ngày học, tên bài, nội dung bài.
+- Sửa được 5 dòng Đánh giá chuyên môn.
+- Sửa được Kiến thức - Lập trình, Kỹ năng bộ môn, Sản phẩm / Dự án.
+- Mức độ hoàn thiện và điểm tiêu chí vẫn chỉnh tay như trước.
+- Generate AI/PDF dùng dữ liệu đã sửa; PDF không hiện trạng thái ô đang chỉnh.
+- Multi-model, multi-worker và Retry batch lỗi của v5.7 giữ nguyên.

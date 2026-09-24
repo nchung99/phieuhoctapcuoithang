@@ -148,8 +148,8 @@ export default async function handler(req,res){
     names:batches[i].map(s=>s.tenHocVien),
     error:e.message
    });
-   // Nếu quota đã hết thì dừng ngay để không đốt thêm request.
-   if(/quota|rate.?limit|429|RESOURCE_EXHAUSTED/i.test(e.message||""))break;
+   // v5.7: batch lỗi được ghi lại nhưng KHÔNG chặn batch sau.
+   // Client có nút retry riêng đúng batch này.
   }
  }
 

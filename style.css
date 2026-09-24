@@ -801,3 +801,18 @@
   letter-spacing:.15px!important;
 }
 
+
+/* v5.7 - retry đúng batch lỗi */
+.failed-batch-box{display:flex;gap:6px;flex-wrap:wrap;align-items:center;width:100%;margin-top:6px}
+.failed-batch-box[hidden]{display:none!important}
+.retry-batch-btn{border:1px solid #b42318;background:#fff;color:#b42318;border-radius:7px;padding:7px 10px;font-weight:700;cursor:pointer;font-size:12px}
+.retry-batch-btn:hover{background:#fff1f0}
+.retry-batch-btn:disabled{opacity:.55;cursor:wait}
+
+/* v5.8 - chỉnh trực tiếp dữ liệu JSON/AI trên phiếu */
+.editable-report,[data-edit]{outline:none;cursor:text}
+.editable-report:hover,[data-edit]:hover{box-shadow:inset 0 -1px 0 rgba(183,23,28,.35)}
+.editable-report:focus,[data-edit]:focus{background:#fff8d9!important;box-shadow:inset 0 0 0 1px #d5a400;border-radius:2px}
+.edit-inline{display:inline;min-width:18px}
+.edit-block{display:block;white-space:pre-wrap}
+.pdf-server .editable-report,.pdf-server [data-edit]{box-shadow:none!important;background:inherit!important}

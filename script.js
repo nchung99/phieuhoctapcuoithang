@@ -6,7 +6,9 @@ const criteria=["Thái độ & tinh thần học tập","Kỹ năng hợp tác &
 const scoreState={};
 function esc(s){return String(s??"").replace(/[&<>"\']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\'":"&#039;"}[m]))}
 
-function classKey(d){return `${d?.tenLop||"Lop"}__${d?.thang||""}`}
+function classKey(d){
+ return d?.__oiecKey || `${d?.tenLop||"Lop"}__${d?.thang||""}`;
+}
 function classCode(name){
  const s=String(name||"LOP").trim();
  // EMS có thể thêm nhóm tuổi sau mã lớp, ví dụ:
@@ -45,6 +47,7 @@ function syncCurrentClass(){
  renderStudent();
 }
 function subject(){
+ if(DATA?.__manualSubject)return DATA.__manualSubject;
  const lessons=(DATA?.noiDungThang||[]);
  const activity=lessons.map(x=>x.tenBuoiHoc||"").join(" ");
  const content=lessons.map(x=>`${x.tenBaiHoc||""} ${x.noiDungBaiHoc||""}`).join(" ");
@@ -94,15 +97,24 @@ function renderStudent(){
  $("#rClass").textContent=DATA.tenLop||"—";
  $("#rSubject").textContent=sub;
  $("#rMonth").textContent=DATA.thang||"—";
- $("#rDuration").textContent=`${DATA.soBuoi||4} buổi • 60 phút / buổi`;
+ $("#rDuration").textContent=DATA.__manualDuration||`${DATA.soBuoi||4} buổi • 60 phút / buổi`;
  $("#skillHeading").textContent=sub==="Coding"?"Kỹ năng lập trình":sub==="Robotics"?"Kỹ năng Robotics":"Kỹ năng theo bộ môn";
 
+ // v5.8: JSON/AI là dữ liệu ban đầu; giáo viên có thể sửa trực tiếp trên phiếu.
+ ["rStudent","rClass","rTeacher","rSubject","rCenter","rMonth","rDuration",
+  "knowledgeText","roboticsText","projectText"].forEach(id=>{
+   const el=$("#"+id); if(el){el.contentEditable="true";el.classList.add("editable-report")}
+ });
+
  const lessons=DATA.noiDungThang||[];
- $("#monthlyLessons").innerHTML=lessons.map((x,i)=>`<div class="month-lesson"><b>Tuần ${i+1} • ${esc(x.ngayHoc)} — ${esc(x.tenBaiHoc)}</b><span>${esc((x.noiDungBaiHoc||"").replace(/\n+/g," ").slice(0,165))}${(x.noiDungBaiHoc||"").length>165?"…":""}</span></div>`).join("");
+ $("#monthlyLessons").innerHTML=lessons.map((x,i)=>`<div class="month-lesson" data-lesson-index="${i}">
+ <b>Tuần ${i+1} • <span class="edit-inline" contenteditable="true" data-edit="lesson-date">${esc(x.ngayHoc)}</span> — <span class="edit-inline" contenteditable="true" data-edit="lesson-title">${esc(x.tenBaiHoc)}</span></b>
+ <span class="edit-block" contenteditable="true" data-edit="lesson-content">${esc(x.noiDungBaiHoc||"")}</span>
+ </div>`).join("");
 
  const labels=["Tư duy Logic trong lập trình","Phân tích & xử lý vấn đề","Khả năng sáng tạo","Tiếp thu kiến thức & ghi nhớ","Khả năng làm việc nhóm"];
  const p=a.chuyenMon||[];
- $("#professionalList").innerHTML=labels.map((x,i)=>`<div class="pro-card"><b>${x}:</b> ${esc(p[i]||"—")}</div>`).join("");
+ $("#professionalList").innerHTML=labels.map((x,i)=>`<div class="pro-card"><b>${x}:</b> <span class="edit-inline" contenteditable="true" data-edit="professional" data-index="${i}">${esc(p[i]||"—")}</span></div>`).join("");
 
  $("#knowledgeText").innerHTML=esc(a.kienThucLapTrinh||"—").replace(/\n/g,"<br>");
  $("#roboticsText").innerHTML=esc(a.kyNangRobotics||"—").replace(/\n/g,"<br>");
@@ -184,6 +196,81 @@ function manualStudent(){
  MANUAL[currentClassKey][current]??={};
  return MANUAL[currentClassKey][current];
 }
+
+function cleanEditableText(el){
+ return (el?.innerText||el?.textContent||"").replace(/\u00a0/g," ").trim();
+}
+function updateClassSelectLabel(){
+ const opt=[...$("#classSelect").options].find(o=>o.value===currentClassKey);
+ if(opt && DATA)opt.textContent=`${DATA.tenLop||"—"} • ${DATA.thang||"—"}`;
+}
+function renameStudent(oldName,newName){
+ newName=(newName||"").trim();
+ if(!newName || newName===oldName)return oldName;
+ if(DATA.hocVien.some(x=>x!==DATA.hocVien.find(s=>s.tenHocVien===oldName)&&x.tenHocVien===newName)){
+   alert("Tên học viên này đã tồn tại trong lớp."); return oldName;
+ }
+ const s=DATA.hocVien.find(x=>x.tenHocVien===oldName);
+ if(!s)return oldName;
+ s.tenHocVien=newName;
+ if(AI[oldName] && !AI[newName]){AI[newName]=AI[oldName];delete AI[oldName]}
+ if(MANUAL[currentClassKey]?.[oldName] && !MANUAL[currentClassKey][newName]){
+   MANUAL[currentClassKey][newName]=MANUAL[currentClassKey][oldName];
+   delete MANUAL[currentClassKey][oldName];
+ }
+ current=newName;
+ localStorage.setItem(`oiec_ai_${currentClassKey}`,JSON.stringify(AI));
+ saveManual();
+ const sel=$("#studentSelect");
+ sel.innerHTML=DATA.hocVien.map(x=>`<option>${esc(x.tenHocVien)}</option>`).join("");
+ sel.value=current;
+ return newName;
+}
+function saveEditedReportField(el){
+ if(!DATA||!current)return;
+ const id=el.id, value=cleanEditableText(el);
+ const m=manualStudent();
+ if(id==="rStudent"){renameStudent(current,value);return renderStudent()}
+ if(id==="rClass"){DATA.tenLop=value||DATA.tenLop;updateClassSelectLabel()}
+ else if(id==="rTeacher"){
+   CLASS_META[currentClassKey]??={};CLASS_META[currentClassKey].teacher=value;
+   addOption($("#teacher"),value);$("#teacher").value=value;
+   localStorage.setItem(`oiec_teacher_${currentClassKey}`,value);
+ }
+ else if(id==="rCenter"){
+   CLASS_META[currentClassKey]??={};CLASS_META[currentClassKey].center=value;
+   addOption($("#center"),value);$("#center").value=value;
+   localStorage.setItem(`oiec_center_${currentClassKey}`,value);
+ }
+ else if(id==="rSubject"){DATA.__manualSubject=value||"";$("#subjectInfo").textContent=subject()}
+ else if(id==="rMonth"){DATA.thang=value||DATA.thang;updateClassSelectLabel();$("#monthInfo").textContent=DATA.thang}
+ else if(id==="rDuration"){
+   DATA.__manualDuration=value;
+   const n=parseInt(value,10); if(Number.isFinite(n)&&n>0){DATA.soBuoi=n;$("#sessionsInfo").textContent=n}
+ }
+ else if(id==="knowledgeText"){m.kienThucLapTrinh=value;saveManual()}
+ else if(id==="roboticsText"){m.kyNangRobotics=value;saveManual()}
+ else if(id==="projectText"){m.sanPhamDuAn=value;saveManual()}
+}
+
+document.addEventListener("blur",e=>{
+ const el=e.target;
+ if(el?.matches?.(".editable-report"))saveEditedReportField(el);
+ if(el?.matches?.('[data-edit="professional"]')){
+   const i=Number(el.dataset.index),m=manualStudent();
+   const base=[...(m.chuyenMon||AI[current]?.chuyenMon||[])];
+   while(base.length<5)base.push("");
+   base[i]=cleanEditableText(el);m.chuyenMon=base;saveManual();
+ }
+ if(el?.matches?.('[data-edit^="lesson-"]')){
+   const card=el.closest(".month-lesson"),i=Number(card?.dataset.lessonIndex);
+   const lesson=DATA?.noiDungThang?.[i]; if(!lesson)return;
+   if(el.dataset.edit==="lesson-date")lesson.ngayHoc=cleanEditableText(el);
+   if(el.dataset.edit==="lesson-title")lesson.tenBaiHoc=cleanEditableText(el);
+   if(el.dataset.edit==="lesson-content")lesson.noiDungBaiHoc=cleanEditableText(el);
+ }
+},true);
+
 document.addEventListener("click",e=>{
  const circle=e.target.closest(".score-circle");
  if(circle && DATA && current){
@@ -215,6 +302,7 @@ $("#jsonFile").onchange=async e=>{
    const d=JSON.parse(await f.text());
    if(d.loaiBaoCao!=="KAPLA_OIEC_MONTHLY")throw Error(`${f.name}: không đúng JSON OIEC Monthly.`);
    if(!Array.isArray(d.hocVien)||!d.hocVien.length)throw Error(`${f.name}: không có học viên.`);
+   d.__oiecKey=`${d.tenLop||"Lop"}__${d.thang||""}__${loaded.length}`;
    loaded.push(d);
   }
   CLASSES=loaded;
@@ -249,7 +337,80 @@ $("#jsonFile").onchange=async e=>{
  }catch(err){alert("Không đọc được JSON: "+err.message)}
 };
 
+
+let FAILED_BATCHES=[];
+
+function subjectOfData(d){
+ if(d?.__manualSubject)return d.__manualSubject;
+ const lessons=(d?.noiDungThang||[]);
+ const activity=lessons.map(x=>x.tenBuoiHoc||"").join(" ");
+ const content=lessons.map(x=>`${x.tenBaiHoc||""} ${x.noiDungBaiHoc||""}`).join(" ");
+ if(/ROBOTIC/i.test(activity))return "Robotics";
+ if(/CODING/i.test(activity))return "Coding";
+ if(/LEGO|Spike|robot|cảm biến|động cơ|lắp ráp/i.test(content))return "Robotics";
+ if(/Scratch|lập trình|tọa độ|khối lệnh|key pressed|nhân vật/i.test(content))return "Coding";
+ return "Coding / Robotics";
+}
+
+function renderFailedBatches(){
+ const box=$("#failedBatchBox");
+ if(!box)return;
+ box.innerHTML="";
+ if(!FAILED_BATCHES.length){box.hidden=true;return}
+ box.hidden=false;
+ FAILED_BATCHES.forEach((f,idx)=>{
+   const b=document.createElement("button");
+   b.className="retry-batch-btn";
+   b.textContent=`Retry ${f.className} • Batch ${f.batch} (${f.names.length} bé)`;
+   b.title=f.names.join(", ");
+   b.onclick=()=>retryFailedBatch(idx,b);
+   box.appendChild(b);
+ });
+}
+
+async function retryFailedBatch(index,button){
+ const f=FAILED_BATCHES[index];
+ if(!f)return;
+ const d=CLASSES.find(x=>classKey(x)===f.classKey);
+ if(!d){alert("Không tìm thấy lớp của batch này.");return}
+ const exactStudents=f.names.map(n=>d.hocVien.find(s=>s.tenHocVien===n)).filter(Boolean);
+ if(!exactStudents.length){alert("Không tìm thấy học viên của batch lỗi.");return}
+
+ const old=button.textContent;
+ button.disabled=true;
+ button.textContent="Đang retry...";
+ try{
+   // Chỉ gửi đúng học viên thuộc batch lỗi, không gửi lại các batch đã thành công.
+   const retryData={...d,hocVien:exactStudents};
+   const r=await fetch("/api/generate",{
+     method:"POST",
+     headers:{"Content-Type":"application/json"},
+     body:JSON.stringify({data:retryData,subject:subjectOfData(d)})
+   });
+   const out=await r.json();
+   const k=f.classKey;
+   if(out.students && Object.keys(out.students).length){
+     CLASS_AI[k]={...(CLASS_AI[k]||{}),...out.students};
+     localStorage.setItem(`oiec_ai_${k}`,JSON.stringify(CLASS_AI[k]));
+   }
+   if(!r.ok || out.failed?.length){
+     const err=out.failed?.map(x=>x.error).join(" | ")||out.error||"Retry lỗi";
+     throw Error(err);
+   }
+   FAILED_BATCHES.splice(index,1);
+   renderFailedBatches();
+   currentClassKey=$("#classSelect").value;
+   syncCurrentClass();
+   alert(`Retry thành công ${f.className} • Batch ${f.batch} • ${exactStudents.length} học viên.`);
+ }catch(e){
+   button.disabled=false;
+   button.textContent=old;
+   alert(`Retry batch lỗi: ${e.message}`);
+ }
+}
+
 $("#aiBtn").onclick=async()=>{
+ if(document.activeElement?.isContentEditable)document.activeElement.blur();
  if(!CLASSES.length)return;
  if(location.protocol==="file:"){
    alert("Generate AI cần chạy bản deploy trên Vercel.");
@@ -266,17 +427,8 @@ $("#aiBtn").onclick=async()=>{
  let nextClass=0,done=0,finishedClasses=0;
  const total=CLASSES.reduce((n,d)=>n+d.hocVien.length,0);
  const failed=[];
-
- const subjectOf=(d)=>{
-   const lessons=(d?.noiDungThang||[]);
-   const activity=lessons.map(x=>x.tenBuoiHoc||"").join(" ");
-   const content=lessons.map(x=>`${x.tenBaiHoc||""} ${x.noiDungBaiHoc||""}`).join(" ");
-   if(/ROBOTIC/i.test(activity))return "Robotics";
-   if(/CODING/i.test(activity))return "Coding";
-   if(/LEGO|Spike|robot|cảm biến|động cơ|lắp ráp/i.test(content))return "Robotics";
-   if(/Scratch|lập trình|tọa độ|khối lệnh|key pressed|nhân vật/i.test(content))return "Coding";
-   return "Coding / Robotics";
- };
+ FAILED_BATCHES=[];
+ renderFailedBatches();
 
  const updateProgress=()=>{
    btn.textContent=`AI ${finishedClasses}/${CLASSES.length} lớp • ${done}/${total} học viên • ${WORKERS} luồng`;
@@ -291,10 +443,22 @@ $("#aiBtn").onclick=async()=>{
        const r=await fetch("/api/generate",{
          method:"POST",
          headers:{"Content-Type":"application/json"},
-         body:JSON.stringify({data:d,subject:subjectOf(d)})
+         body:JSON.stringify({data:d,subject:subjectOfData(d)})
        });
        const out=await r.json();
        if(!r.ok){
+         if(out.failed?.length){
+           for(const fb of out.failed){
+             FAILED_BATCHES.push({
+               classKey:k,
+               className:d.tenLop,
+               batch:fb.batch,
+               names:[...(fb.names||[])],
+               error:fb.error||out.error||"lỗi AI"
+             });
+           }
+           renderFailedBatches();
+         }
          failed.push(`${d.tenLop}: ${out.error||"lỗi AI"}`);
        }else{
          CLASS_AI[k]={...(CLASS_AI[k]||{}),...(out.students||{})};
@@ -302,6 +466,16 @@ $("#aiBtn").onclick=async()=>{
          const newly=Object.keys(out.students||{}).length;
          done+=newly;
          if(out.failed?.length){
+           for(const fb of out.failed){
+             FAILED_BATCHES.push({
+               classKey:k,
+               className:d.tenLop,
+               batch:fb.batch,
+               names:[...(fb.names||[])],
+               error:fb.error||"lỗi AI"
+             });
+           }
+           renderFailedBatches();
            failed.push(`${d.tenLop}: ${newly}/${d.hocVien.length} học viên; ${out.failed.map(x=>x.error).join(" | ")}`);
          }
        }
@@ -347,6 +521,7 @@ function reportHTML(){
    if(x.checked)x.setAttribute("checked","checked"); else x.removeAttribute("checked");
  });
  const report=$("#report").cloneNode(true);
+ report.querySelectorAll("[contenteditable]").forEach(x=>x.removeAttribute("contenteditable"));
  report.classList.add("pdf-server");
  const css=getAllCSS();
  return `<!doctype html>
@@ -398,6 +573,7 @@ async function downloadClassZip(d,classIndex,totalClasses){
 }
 
 $("#printBtn").onclick=async()=>{
+ if(document.activeElement?.isContentEditable)document.activeElement.blur();
  if(!CLASSES.length)return;
  if(location.protocol==="file:"){
    alert("Xuất ZIP PDF cần chạy bản đã deploy trên Vercel.");
