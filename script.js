@@ -270,17 +270,19 @@ function openEdit(){
 function closeEdit(){$("#editModal").hidden=true}
 function saveEdit(){
  try{
-  const f=new FormData($("#editForm")),oldStudent=current,oldKey=currentClassKey;
-  const newName=String(f.get("student")||oldStudent).trim()||oldStudent;
+  const editBox=$("#editForm"),oldStudent=current,oldKey=currentClassKey;
+  // Không dùng FormData: editForm là DIV. Đọc trực tiếp giá trị input/textarea đang hiển thị.
+  const get=name=>{const el=editBox.querySelector(`[name="${name}"]`);return el?el.value:""};
+  const newName=String(get("student")||oldStudent).trim()||oldStudent;
   const st=DATA.hocVien.find(x=>x.tenHocVien===oldStudent);if(!st)throw Error("Không tìm thấy học viên hiện tại.");
 
   // Lưu nội dung trước khi đổi key lớp/tháng.
   MANUAL[oldKey]??={};
   const oldManual=MANUAL[oldKey][oldStudent]??={};
-  oldManual.chuyenMon=[0,1,2,3,4].map(i=>String(f.get(`pro_${i}`)||"").trim());
-  oldManual.kienThucLapTrinh=String(f.get("knowledge")||"").trim();
-  oldManual.kyNangRobotics=String(f.get("skill")||"").trim();
-  oldManual.sanPhamDuAn=String(f.get("project")||"").trim();
+  oldManual.chuyenMon=[0,1,2,3,4].map(i=>String(get(`pro_${i}`)||"").trim());
+  oldManual.kienThucLapTrinh=String(get("knowledge")||"").trim();
+  oldManual.kyNangRobotics=String(get("skill")||"").trim();
+  oldManual.sanPhamDuAn=String(get("project")||"").trim();
 
   if(newName!==oldStudent){
    if(DATA.hocVien.some(x=>x!==st&&x.tenHocVien===newName))throw Error("Tên học viên đã tồn tại.");
@@ -289,12 +291,12 @@ function saveEdit(){
    MANUAL[oldKey][newName]=oldManual;delete MANUAL[oldKey][oldStudent];current=newName;
   }
 
-  DATA.tenLop=String(f.get("className")||DATA.tenLop).trim();
-  DATA.thang=String(f.get("month")||DATA.thang).trim();
-  DATA.__manualSubject=String(f.get("subject")||"").trim();
-  (DATA.noiDungThang||[]).forEach((x,i)=>{x.ngayHoc=String(f.get(`date_${i}`)||"").trim();x.tenBaiHoc=String(f.get(`title_${i}`)||"").trim();x.noiDungBaiHoc=String(f.get(`content_${i}`)||"").trim()});
+  DATA.tenLop=String(get("className")||DATA.tenLop).trim();
+  DATA.thang=String(get("month")||DATA.thang).trim();
+  DATA.__manualSubject=String(get("subject")||"").trim();
+  (DATA.noiDungThang||[]).forEach((x,i)=>{x.ngayHoc=String(get(`date_${i}`)||"").trim();x.tenBaiHoc=String(get(`title_${i}`)||"").trim();x.noiDungBaiHoc=String(get(`content_${i}`)||"").trim()});
 
-  const teacher=String(f.get("teacher")||"").trim(),center=String(f.get("center")||"").trim();
+  const teacher=String(get("teacher")||"").trim(),center=String(get("center")||"").trim();
   const newKey=classKey(DATA);
 
   // Nếu sửa lớp/tháng thì chuyển toàn bộ cache/meta/manual sang key mới.
