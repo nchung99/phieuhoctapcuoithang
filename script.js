@@ -283,7 +283,10 @@ function openEdit(){
  if(!DATA||!current)return;
  const a={...(AI[current]||{}),...(MANUAL[currentClassKey]?.[current]||{})},p=a.chuyenMon||[];
  let h='<div class="edit-section">Thông tin chung</div>';
- h+=editField("Tên học viên","student",current)+editField("Lớp","className",DATA.tenLop)+editField("Giáo viên","teacher",selectedTeacher())+editField("Center","center",selectedCenter())+editField("Bộ môn","subject",subject())+editField("Tháng","month",DATA.thang);
+ h+=editField("Tên học viên","student",current)+editField("Lớp","className",DATA.tenLop)+editField("Giáo viên","teacher",selectedTeacher())+editField("Center","center",selectedCenter());
+ const currentSubject=subject();
+ h+=`<div class="edit-field"><label>Bộ môn</label><select name="subject"><option value="Robotics" ${currentSubject==="Robotics"?"selected":""}>Robotics</option><option value="Coding" ${currentSubject==="Coding"?"selected":""}>Coding</option></select></div>`;
+ h+=editField("Tháng","month",DATA.thang);
  h+='<div class="edit-section">Nội dung học trong tháng</div>';
  (DATA.noiDungThang||[]).forEach((x,i)=>{h+=editField(`Tuần ${i+1} - Ngày học`,`date_${i}`,x.ngayHoc)+editField(`Tuần ${i+1} - Tên bài`,`title_${i}`,x.tenBaiHoc)+editField(`Tuần ${i+1} - Nội dung`,`content_${i}`,x.noiDungBaiHoc,true,true)});
  h+='<div class="edit-section">Đánh giá chuyên môn</div>';

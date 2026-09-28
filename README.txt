@@ -14,3 +14,6 @@ v8.4: Enlarged A4 typography/spacing, corrected the 3-column table to five indep
 
 
 v8.5: Top row of Knowledge/Subject Skill is now fixed by subject. Robotics uses LEGO SPIKE Essential + robot assembly; Coding uses Scratch + programming products/games. Gemini only generates the personalized lower row, project, completion and criteria.
+
+
+v8.6: Bộ môn trong Edit là dropdown Robotics/Coding. Khi Save, subject() dùng lựa chọn này và hai ô mặc định hàng 1 tự đổi theo đúng bộ môn.
