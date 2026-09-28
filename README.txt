@@ -17,3 +17,13 @@ v8.5: Top row of Knowledge/Subject Skill is now fixed by subject. Robotics uses 
 
 
 v8.6: Bộ môn trong Edit là dropdown Robotics/Coding. Khi Save, subject() dùng lựa chọn này và hai ô mặc định hàng 1 tự đổi theo đúng bộ môn.
+
+
+v8.7 Gemini stability only (UI/report unchanged from v8.6):
+- Stable models only: gemini-3.5-flash-lite, gemini-3.5-flash, gemini-3.6-flash, gemini-3.8-flash.
+- Removed gemini-3-flash-preview and older 3.1 fallback.
+- Up to 3 models per failed batch.
+- One short retry for transient 408/429/5xx/timeout with jitter.
+- Daily/free-tier quota errors switch model immediately instead of retrying the same model.
+- Model timeout 10s.
+- Gemini 3.x generation config left at defaults except JSON response MIME type.

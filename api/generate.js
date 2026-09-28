@@ -1,4 +1,4 @@
-const MODELS=["gemini-3.5-flash-lite","gemini-3.1-flash-lite","gemini-3.5-flash","gemini-3-flash-preview"];
+const MODELS=["gemini-3.5-flash-lite","gemini-3.5-flash","gemini-3.6-flash","gemini-3.8-flash"];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function promptForBatch(common,students,subject){
  const names=students.map(s=>s.tenHocVien);
@@ -18,15 +18,37 @@ Phải đủ đúng key: ${JSON.stringify(names)}
 THÔNG TIN THÁNG: ${JSON.stringify(common)}
 DỮ LIỆU HỌC VIÊN: ${JSON.stringify(students)}`;
 }
-async function callModel(key,model,prompt,ms=6500){
+async function callModel(key,model,prompt,ms=10000){
  const c=new AbortController(),timer=setTimeout(()=>c.abort(),ms);
  try{
-  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{method:"POST",headers:{"Content-Type":"application/json"},signal:c.signal,body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json",temperature:.45}})});
-  const raw=await r.text();let j;try{j=JSON.parse(raw)}catch(_){throw Error(`${model}: API trả non-JSON`)}
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{
+   method:"POST",headers:{"Content-Type":"application/json"},signal:c.signal,
+   body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json"}})
+  });
+  const raw=await r.text();let j;try{j=JSON.parse(raw)}catch(_){const e=Error(`${model}: API trả non-JSON`);e.status=r.status;throw e}
   if(!r.ok){const msg=j?.error?.message||`HTTP ${r.status}`;const err=Error(`${model}: ${msg}`);err.status=r.status;throw err}
   let t=j?.candidates?.[0]?.content?.parts?.map(x=>x.text||"").join("")||"";t=t.replace(/^```json\s*/i,"").replace(/```$/,"").trim();
-  try{return JSON.parse(t)}catch(_){throw Error(`${model}: AI trả non-JSON`)}
- }catch(e){if(e?.name==="AbortError")throw Error(`${model}: timeout ${ms/1000}s`);throw e}finally{clearTimeout(timer)}
+  try{return JSON.parse(t)}catch(_){const e=Error(`${model}: AI trả non-JSON`);e.status=502;throw e}
+ }catch(e){
+  if(e?.name==="AbortError"){const x=Error(`${model}: timeout ${ms/1000}s`);x.status=504;throw x}
+  throw e
+ }finally{clearTimeout(timer)}
+}
+async function callWithRetry(key,model,prompt){
+ let last;
+ for(let attempt=0;attempt<2;attempt++){
+  try{return await callModel(key,model,prompt,10000)}
+  catch(e){
+   last=e;
+   const status=Number(e?.status||0),k=kind(e?.message||"");
+   const transient=status===408||status===429||status>=500||k==="busy"||k==="timeout";
+   if(!transient||attempt===1)throw e;
+   // 429 quota ngày thường không tự hết trong vài giây: chuyển model thay vì spam cùng model.
+   if(status===429 && /quota exceeded|free_tier_requests/i.test(e?.message||""))throw e;
+   await sleep(900+Math.floor(Math.random()*350));
+  }
+ }
+ throw last;
 }
 function kind(msg=""){
  if(/quota exceeded|free_tier_requests|rate.?limit|429/i.test(msg))return "quota";
@@ -42,20 +64,20 @@ export default async function handler(req,res){
  if(data.hocVien.length>5)return res.status(400).json({error:"Mỗi request tối đa 5 học viên."});
  const common={tenLop:data.tenLop,thang:data.thang,soBuoi:data.soBuoi,noiDungThang:data.noiDungThang},prompt=promptForBatch(common,data.hocVien,subject);
  const seed=Math.max(0,(Number(req.body?.batch)||1)-1);
- // Chỉ tối đa 2 model/request để không kéo dài Vercel invocation.
- const tries=[MODELS[seed%MODELS.length],MODELS[(seed+1)%MODELS.length]];
+ // Tối đa 3 model/request: đủ fallback nhưng vẫn giới hạn thời gian Vercel.
+ const tries=[MODELS[seed%MODELS.length],MODELS[(seed+1)%MODELS.length],MODELS[(seed+2)%MODELS.length]];
  let last="",lastKind="";
  for(let i=0;i<tries.length;i++){
   const model=tries[i];
   try{
-   const out=await callModel(key,model,prompt,6500),students=out?.students||{};
+   const out=await callWithRetry(key,model,prompt),students=out?.students||{};
    const missing=data.hocVien.filter(s=>!students[s.tenHocVien]).map(s=>s.tenHocVien);
    if(missing.length)throw Error(`${model}: thiếu ${missing.join(", ")}`);
    return res.status(200).json({students,model});
   }catch(e){
    last=e.message;lastKind=kind(last);
    // High demand thường tạm thời: nghỉ ngắn trước model kế tiếp.
-   if(lastKind==="busy")await sleep(900);
+   if(lastKind==="busy"||lastKind==="timeout")await sleep(700+Math.floor(Math.random()*300));
    // Quota model này hết: chuyển model ngay, không retry spam cùng model.
   }
  }
