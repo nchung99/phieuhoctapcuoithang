@@ -43,7 +43,7 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef2f6;color:#1
 .form-radio{width:4.5mm;height:4.5mm;border:1.15px solid #111;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-style:normal}
 .form-radio.checked:after{content:"×";font-size:15pt;line-height:1;transform:translateY(-.25mm)}
 .oiec-two-col{display:grid;grid-template-columns:1fr 1fr;column-gap:15mm}
-.oiec-duration{display:flex;align-items:center;gap:7mm}.oiec-duration strong{word-spacing:11mm}
+.oiec-duration{display:flex;align-items:center;gap:7mm}.oiec-duration strong{word-spacing:normal}
 .hidden-data{display:none!important}
 
 .oiec-professional{margin-top:.8mm}
