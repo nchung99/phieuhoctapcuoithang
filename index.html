@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>KAPLA OIEC Monthly Report</title>
-  <link rel="stylesheet" href="style.css?v=8.1">
+  <link rel="stylesheet" href="style.css?v=8.5">
 </head>
 <body>
 <header class="topbar">
@@ -114,20 +114,20 @@
     </section>
 
     <section class="oiec-ability">
-      <div class="ability-grid">
-        <div class="ability-card">
-          <h3>Kiến thức - Lập trình</h3>
-          <div id="knowledgeText">—</div>
-        </div>
-        <div class="ability-card">
-          <h3 id="skillHeading">Kỹ năng Robotics</h3>
-          <div id="roboticsText">—</div>
-        </div>
-        <div class="ability-card product-card">
-          <h3>Sản phẩm / Dự án</h3>
-          <div id="projectText">—</div>
-          <div class="completion">
-            <b>Mức độ hoàn thiện:</b>
+      <div class="ability-table">
+        <div class="ability-head">Kiến thức - Lập trình</div>
+        <div class="ability-head" id="skillHeading">Kỹ năng Robotics</div>
+        <div class="ability-head">Sản phẩm / Dự án</div>
+
+        <div class="ability-cell" id="knowledgeTop">—</div>
+        <div class="ability-cell" id="roboticsTop">—</div>
+        <div class="ability-cell" id="projectText">—</div>
+
+        <div class="ability-cell" id="knowledgeBottom">—</div>
+        <div class="ability-cell" id="roboticsBottom">—</div>
+        <div class="ability-cell completion">
+          <b>Mức độ hoàn thiện:</b>
+          <div class="completion-options">
             <label><input type="radio" name="completion" value="Đạt tối thiểu"> Đạt tối thiểu</label>
             <label><input type="radio" name="completion" value="Đúng yêu cầu"> Đúng yêu cầu</label>
             <label><input type="radio" name="completion" value="Có sáng tạo"> Có sáng tạo</label>
@@ -162,6 +162,6 @@
   <div class="edit-actions"><button id="editCancel" class="btn" type="button">Hủy</button><button id="editSave" class="btn primary" type="button">Lưu</button></div>
  </div>
 </div>
-<script src="script.js?v=8.0"></script>
+<script src="script.js?v=8.5"></script>
 </body>
 </html>

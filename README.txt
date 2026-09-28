@@ -8,3 +8,9 @@ KAPLA OIEC v6.1 STABLE
 
 
 v8: Report template rebuilt from the supplied official OIEC PDF form. Logic based on v6.1.2.
+
+
+v8.4: Enlarged A4 typography/spacing, corrected the 3-column table to five independent content fields, updated AI prompt/edit fields, and fixed logo URL for server PDF.
+
+
+v8.5: Top row of Knowledge/Subject Skill is now fixed by subject. Robotics uses LEGO SPIKE Essential + robot assembly; Coding uses Scratch + programming products/games. Gemini only generates the personalized lower row, project, completion and criteria.

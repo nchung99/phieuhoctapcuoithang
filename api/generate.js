@@ -5,8 +5,15 @@ function promptForBatch(common,students,subject){
  return `Bạn là giáo viên KAPLA viết phiếu đánh giá học tập OIEC THEO THÁNG.
 Đánh giá RIÊNG từng học viên từ dữ liệu thực tế; không trộn dữ liệu học viên. Buổi vắng không phải điểm thấp. Không bịa thông tin. Câu ngắn, tự nhiên. Bộ môn: ${subject}.
 diemTieuChi AI chỉ dùng 4 hoặc 5. mucDoHoanThien chỉ "Đúng yêu cầu" hoặc "Có sáng tạo".
+Nội dung bảng:
+- KHÔNG tạo nội dung cho hàng 1 của cột Kiến thức - Lập trình và Kỹ năng bộ môn. Hai ô này được giao diện tự điền cố định theo Robotics/Coding.
+- hocSinhCoThe: bắt đầu bằng "Học sinh có thể:" và đánh giá kiến thức/lập trình học viên thực sự nắm được trong tháng.
+- coCheRobot: nếu Robotics bắt đầu bằng "Cơ chế/robot hoàn chỉnh:"; nếu Coding bắt đầu bằng "Kỹ năng hoàn chỉnh:". Nội dung phải cá nhân hóa theo dữ liệu 4 buổi.
+- sanPhamDuAn: bắt đầu bằng "Tên sản phẩm/robot/dự án:" và chỉ dùng các bài/sản phẩm có trong dữ liệu tháng.
+Mỗi ô viết gọn để vừa một trang A4.
+
 Trả JSON THUẦN:
-{"students":{"TÊN":{"chuyenMon":["","","","",""],"kienThucLapTrinh":"","kyNangRobotics":"","sanPhamDuAn":"","mucDoHoanThien":"Đúng yêu cầu","diemTieuChi":{"Thái độ & tinh thần học tập":4,"Kỹ năng hợp tác & giao tiếp":4,"Kỹ năng thực hành & sáng tạo":4,"Tính kiên trì & tự giác":4,"Khả năng tiếp thu & vận dụng kiến thức":4,"Tiến bộ cá nhân & đạo đức":4}}}}
+{"students":{"TÊN":{"chuyenMon":["","","","",""],"hocSinhCoThe":"","coCheRobot":"","sanPhamDuAn":"","mucDoHoanThien":"Đúng yêu cầu","diemTieuChi":{"Thái độ & tinh thần học tập":4,"Kỹ năng hợp tác & giao tiếp":4,"Kỹ năng thực hành & sáng tạo":4,"Tính kiên trì & tự giác":4,"Khả năng tiếp thu & vận dụng kiến thức":4,"Tiến bộ cá nhân & đạo đức":4}}}}
 Phải đủ đúng key: ${JSON.stringify(names)}
 THÔNG TIN THÁNG: ${JSON.stringify(common)}
 DỮ LIỆU HỌC VIÊN: ${JSON.stringify(students)}`;

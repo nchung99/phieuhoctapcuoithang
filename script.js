@@ -108,8 +108,32 @@ function renderStudent(){
  const p=a.chuyenMon||[];
  $("#professionalList").innerHTML=labels.map((x,i)=>`<div class="pro-card"><b>${x}:</b> ${esc(p[i]||"—")}</div>`).join("");
 
- $("#knowledgeText").innerHTML=esc(a.kienThucLapTrinh||"—").replace(/\n/g,"<br>");
- $("#roboticsText").innerHTML=esc(a.kyNangRobotics||"—").replace(/\n/g,"<br>");
+ const splitLegacy=(value)=>{
+   const raw=String(value||"").trim();
+   if(!raw)return ["",""];
+   const lines=raw.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+   return lines.length>=2?[lines[0],lines.slice(1).join("\n")]:[raw,""];
+ };
+ const [,legacyKBottom]=splitLegacy(a.kienThucLapTrinh);
+ const [,legacyRBottom]=splitLegacy(a.kyNangRobotics);
+
+ // Hàng 1 là nội dung cố định theo bộ môn, KHÔNG lấy từ AI.
+ const isRobotics=sub==="Robotics";
+ const kTop=isRobotics
+   ?"Ngôn ngữ/ phần mềm sử dụng: LEGO SPIKE Essential"
+   :"Ngôn ngữ/ phần mềm sử dụng: Scratch";
+ const rTop=isRobotics
+   ?"Học sinh có thể lắp ráp: Các mô hình robot theo chủ đề đã học."
+   :"Học sinh có thể lập trình: Các sản phẩm/trò chơi theo chủ đề đã học.";
+
+ // Hàng 2 vẫn cá nhân hóa theo từng học viên bằng AI / chỉnh tay.
+ const kBottom=a.hocSinhCoThe||legacyKBottom||"—";
+ const rBottom=a.coCheRobot||legacyRBottom||"—";
+
+ $("#knowledgeTop").innerHTML=esc(kTop).replace(/\n/g,"<br>");
+ $("#knowledgeBottom").innerHTML=esc(kBottom).replace(/\n/g,"<br>");
+ $("#roboticsTop").innerHTML=esc(rTop).replace(/\n/g,"<br>");
+ $("#roboticsBottom").innerHTML=esc(rBottom).replace(/\n/g,"<br>");
  $("#projectText").innerHTML=esc(a.sanPhamDuAn||"—").replace(/\n/g,"<br>");
  document.querySelectorAll('input[name="completion"]').forEach(x=>{
    const yes=x.value===a.mucDoHoanThien;
@@ -265,7 +289,11 @@ function openEdit(){
  h+='<div class="edit-section">Đánh giá chuyên môn</div>';
  ["Tư duy Logic","Phân tích & xử lý vấn đề","Khả năng sáng tạo","Tiếp thu & ghi nhớ","Làm việc nhóm"].forEach((x,i)=>h+=editField(x,`pro_${i}`,p[i]||"",true,true));
  h+='<div class="edit-section">Năng lực & sản phẩm</div>';
- h+=editField("Kiến thức - Lập trình","knowledge",a.kienThucLapTrinh||"",true,true)+editField("Kỹ năng bộ môn","skill",a.kyNangRobotics||"",true,true)+editField("Sản phẩm / Dự án","project",a.sanPhamDuAn||"",true,true);
+ const legacyK=String(a.kienThucLapTrinh||"").split(/\n+/);
+ const legacyR=String(a.kyNangRobotics||"").split(/\n+/);
+ h+=editField("Học sinh có thể","studentCan",a.hocSinhCoThe||legacyK.slice(1).join("\n")||"",true,true);
+ h+=editField("Cơ chế / kỹ năng hoàn chỉnh","mechanism",a.coCheRobot||legacyR.slice(1).join("\n")||"",true,true);
+ h+=editField("Sản phẩm / Dự án","project",a.sanPhamDuAn||"",true,true);
  $("#editForm").innerHTML=h;$("#editModal").hidden=false;
 }
 function closeEdit(){$("#editModal").hidden=true}
@@ -281,8 +309,8 @@ function saveEdit(){
   MANUAL[oldKey]??={};
   const oldManual=MANUAL[oldKey][oldStudent]??={};
   oldManual.chuyenMon=[0,1,2,3,4].map(i=>String(get(`pro_${i}`)||"").trim());
-  oldManual.kienThucLapTrinh=String(get("knowledge")||"").trim();
-  oldManual.kyNangRobotics=String(get("skill")||"").trim();
+  oldManual.hocSinhCoThe=String(get("studentCan")||"").trim();
+  oldManual.coCheRobot=String(get("mechanism")||"").trim();
   oldManual.sanPhamDuAn=String(get("project")||"").trim();
 
   if(newName!==oldStudent){
@@ -417,6 +445,11 @@ function reportHTML(){
  });
  const report=$("#report").cloneNode(true);
  report.classList.add("pdf-server");
+ const logo=report.querySelector(".oiec-brand img");
+ if(logo){
+   const liveLogo=document.querySelector("#report .oiec-brand img");
+   if(liveLogo?.src)logo.src=liveLogo.src;
+ }
  const css=getAllCSS();
  return `<!doctype html>
 <html lang="vi">

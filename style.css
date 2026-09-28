@@ -20,7 +20,7 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef2f6;color:#1
   width:210mm!important;height:297mm!important;min-height:297mm!important;max-height:297mm!important;
   margin:0 auto!important;padding:0!important;background:#fff!important;color:#111!important;
   box-shadow:0 5px 24px #24384b1f!important;overflow:hidden!important;
-  font-family:Arial,Helvetica,sans-serif!important;font-size:9.1pt!important;
+  font-family:Arial,Helvetica,sans-serif!important;font-size:9.7pt!important;
 }
 .oiec-header{
   height:35.5mm;background:#bd2018;color:#fff;padding:4.2mm 12.5mm 4mm 9.5mm;
@@ -35,8 +35,8 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef2f6;color:#1
 .oiec-pill{height:8.6mm;border-radius:5mm;color:#fff;display:inline-flex;align-items:center;justify-content:center;padding:0 6.2mm;font-size:9pt;font-weight:800;white-space:nowrap}
 .oiec-pill.red{background:#c52b20}.oiec-pill.purple{background:#2e1a79}
 .oiec-general{margin-top:0}
-.oiec-info{padding:1.3mm 2.6mm 0;font-size:8.8pt;line-height:1.45}
-.oiec-info>div{min-height:5.5mm}
+.oiec-info{padding:1.6mm 2.6mm 0;font-size:9.35pt;line-height:1.5}
+.oiec-info>div{min-height:6.1mm}
 .oiec-info strong{font-weight:400}
 .oiec-subject-line{display:flex;align-items:center;gap:2.2mm}.oiec-subject-line>span:first-child{margin-right:4mm}
 .subject-option{display:inline-flex;align-items:center;gap:1.5mm}
@@ -46,34 +46,55 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef2f6;color:#1
 .oiec-duration{display:flex;align-items:center;gap:7mm}.oiec-duration strong{word-spacing:normal}
 .hidden-data{display:none!important}
 
-.oiec-professional{margin-top:.8mm}
-.oiec-professional .oiec-pill{margin-bottom:1.1mm}
+.oiec-professional{margin-top:1.2mm}
+.oiec-professional .oiec-pill{margin-bottom:1.5mm}
 .professional-cards{padding:0 4.3mm}
-.pro-card{position:relative;padding:1.35mm 0 1.35mm 3.5mm;font-size:8.55pt;line-height:1.62;color:#111}
+.pro-card{position:relative;padding:1.75mm 0 1.75mm 3.5mm;font-size:9.15pt;line-height:1.62;color:#111}
 .pro-card:before{content:"•";position:absolute;left:0;top:1.2mm;font-weight:700}
 .pro-card b{font-weight:700;color:#111}
 
-.oiec-ability{margin:5.5mm 2.8mm 0}
-.ability-grid{display:grid;grid-template-columns:1fr 1fr 1.1fr;border:1.1px solid #ef7771;background:#f8d7d5}
-.ability-card{min-height:55mm;border-right:1.1px solid #ef7771;background:#f8d7d5;display:grid;grid-template-rows:12mm 1fr;padding:0;font-size:8.2pt;line-height:1.32}
-.ability-card:last-child{border-right:0}.ability-card h3{margin:0;background:#bd241b;color:#fff;border-bottom:1.1px solid #ef7771;display:flex;align-items:center;justify-content:center;text-align:center;font-size:8.6pt;font-weight:800;padding:0 2mm}
-.ability-card>div:not(.completion){padding:3.1mm 3mm}
-.product-card{grid-template-rows:12mm 1fr 22mm}
-.completion{border-top:1.1px solid #ef7771;padding:2.6mm 3mm!important;font-size:7.7pt;line-height:1.5}
-.completion b{display:block;margin-bottom:1.3mm}.completion label{display:inline-flex;align-items:center;margin:0 2mm .8mm 0;white-space:nowrap}
-.completion input{appearance:none;-webkit-appearance:none;width:3.4mm;height:3.4mm;border:1px solid #333;margin:0 .8mm 0 0;position:relative;background:#fff}
-.completion input:checked:after{content:"×";position:absolute;left:.15mm;top:-2.1mm;font-size:13pt;line-height:1;color:#111}
+.oiec-ability{margin:7mm 2.8mm 0}
+.ability-table{
+  display:grid;
+  grid-template-columns:1fr 1fr 1.1fr;
+  grid-template-rows:12.5mm 33mm 33mm;
+  border-top:1.1px solid #ef7771;
+  border-left:1.1px solid #ef7771;
+  background:#f8d7d5
+}
+.ability-head{
+  background:#bd241b;color:#fff;font-size:9.2pt;font-weight:800;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  padding:0 2mm;border-right:1.1px solid #ef7771;border-bottom:1.1px solid #ef7771
+}
+.ability-cell{
+  background:#f8d7d5;padding:3.5mm 3.2mm;font-size:9pt;line-height:1.38;
+  border-right:1.1px solid #ef7771;border-bottom:1.1px solid #ef7771;
+  overflow:hidden
+}
+.completion{padding:3.5mm 3.2mm!important;font-size:8.65pt;line-height:1.55}
+.completion>b{display:block;margin-bottom:1.5mm}
+.completion-options{display:flex;align-items:center;flex-wrap:wrap;gap:1.1mm 2.4mm}
+.completion label{display:inline-flex;align-items:center;white-space:nowrap;margin:0}
+.completion input{
+  appearance:none;-webkit-appearance:none;width:3.4mm;height:3.4mm;
+  border:1px solid #333;margin:0 .8mm 0 0;position:relative;background:#fff
+}
+.completion input:checked:after{
+  content:"×";position:absolute;left:.15mm;top:-2.1mm;
+  font-size:13pt;line-height:1;color:#111
+}
 
-.oiec-criteria{margin:3.5mm 5.3mm 0}
-.criteria-top{height:9mm;display:flex;align-items:center}
+.oiec-criteria{margin:4.3mm 5.3mm 0}
+.criteria-top{height:10mm;display:flex;align-items:center}
 .criteria-top .oiec-pill{transform:translateY(-1.5mm);min-width:50mm}
-.criteria-legend{margin-left:15mm;display:grid;grid-template-columns:5mm 24mm repeat(5,9mm);align-items:center;font-size:8.3pt;font-weight:700}
+.criteria-legend{margin-left:15mm;display:grid;grid-template-columns:5mm 24mm repeat(5,9mm);align-items:center;font-size:9pt;font-weight:700}
 .legend-x{width:4.4mm;height:4.4mm;border:1px solid #111;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12pt;font-style:normal;font-weight:400}
-.criteria{width:100%;border-collapse:collapse;margin-top:0;font-size:8.4pt}
-.criteria thead{display:none}.criteria td{border:0;height:6.4mm;padding:0;text-align:center;background:#fff}
+.criteria{width:100%;border-collapse:collapse;margin-top:.8mm;font-size:9.15pt}
+.criteria thead{display:none}.criteria td{border:0;height:7.3mm;padding:0;text-align:center;background:#fff}
 .criteria td:first-child{text-align:left;width:56%;padding-left:3.2mm}
 .criteria td:not(:first-child){width:8.8%}
-.score-circle{width:4.8mm;height:4.8mm;border:1px solid #333;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;position:relative;cursor:pointer;background:#fff}
+.score-circle{width:5.2mm;height:5.2mm;border:1px solid #333;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;position:relative;cursor:pointer;background:#fff}
 .score-circle.selected:after{content:"×";font-size:15pt;line-height:1;position:absolute;top:-2.2mm;color:#111}
 .footer{display:none!important}
 
