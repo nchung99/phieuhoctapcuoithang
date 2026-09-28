@@ -94,6 +94,9 @@ function renderStudent(){
  $("#rStudent").textContent=s.tenHocVien;
  $("#rClass").textContent=DATA.tenLop||"—";
  $("#rSubject").textContent=sub;
+ const rr=$("#radioRobotics"), rc=$("#radioCoding");
+ if(rr) rr.classList.toggle("checked",sub==="Robotics");
+ if(rc) rc.classList.toggle("checked",sub==="Coding");
  $("#rMonth").textContent=DATA.thang||"—";
  $("#rDuration").textContent=`${DATA.soBuoi||4} buổi • 60 phút / buổi`;
  $("#skillHeading").textContent=sub==="Coding"?"Kỹ năng lập trình":sub==="Robotics"?"Kỹ năng Robotics":"Kỹ năng theo bộ môn";
@@ -113,9 +116,7 @@ function renderStudent(){
    x.checked=yes;
    if(yes)x.setAttribute("checked","checked"); else x.removeAttribute("checked");
  });
- document.querySelectorAll('.completion label').forEach(lab=>{
-   if(lab.textContent.trim()==="Đạt tối thiểu") lab.style.display="none";
- });
+ document.querySelectorAll('.completion label').forEach(lab=>{ lab.style.display="inline-flex"; });
  Object.keys(scoreState).forEach(k=>delete scoreState[k]);
  if(a.diemTieuChi)Object.entries(a.diemTieuChi).forEach(([k,v])=>scoreState[k]=v);
  renderCriteria();

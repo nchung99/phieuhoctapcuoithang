@@ -5,3 +5,6 @@ KAPLA OIEC v6.1 STABLE
 - Client timeout 24s.
 - Retry exact failed batch.
 - FIX Edit Save: safely migrates class/month cache key and refreshes dropdown/panel/report.
+
+
+v8: Report template rebuilt from the supplied official OIEC PDF form. Logic based on v6.1.2.
