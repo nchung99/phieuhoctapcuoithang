@@ -4,6 +4,22 @@ let CLASSES=[], CLASS_AI={}, CLASS_META={}, currentClassKey=null;
 let MANUAL={};
 const criteria=["Thái độ & tinh thần học tập","Kỹ năng hợp tác & giao tiếp","Kỹ năng thực hành & sáng tạo","Tính kiên trì & tự giác","Khả năng tiếp thu & vận dụng kiến thức","Tiến bộ cá nhân & đạo đức"];
 const scoreState={};
+
+function notify(message,type="info"){
+ const text=String(message??"");
+ if(window.Swal){
+   const icon=type==="error"?"error":type==="success"?"success":"info";
+   return Swal.fire({
+     icon,
+     title: icon==="error" ? "Có lỗi" : icon==="success" ? "Hoàn tất" : "Thông báo",
+     text,
+     confirmButtonText:"OK",
+     confirmButtonColor:"#8f1738",
+     width:430
+   });
+ }
+ console[type==="error"?"error":"log"](text);
+}
 function esc(s){return String(s??"").replace(/[&<>"\']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\'":"&#039;"}[m]))}
 
 function classKey(d){return `${d?.tenLop||"Lop"}__${d?.thang||""}`}
@@ -291,8 +307,8 @@ $("#jsonFile").onchange=async e=>{
   $("#studentSelect").onchange=()=>{current=$("#studentSelect").value;renderStudent()};
   syncCurrentClass();
   $("#aiBtn").disabled=false;$("#editBtn").disabled=false;$("#printBtn").disabled=false;
-  alert(`Đã nhập ${CLASSES.length} lớp • ${CLASSES.reduce((n,d)=>n+d.hocVien.length,0)} học viên.`);
- }catch(err){alert("Không đọc được JSON: "+err.message)}
+  notify(`Đã nhập ${CLASSES.length} lớp • ${CLASSES.reduce((n,d)=>n+d.hocVien.length,0)} học viên.`,"success");
+ }catch(err){notify("Không đọc được JSON: "+err.message,"error")}
 };
 
 
@@ -373,7 +389,7 @@ function saveEdit(){
   $("#classInfo").textContent=DATA.tenLop||"—";$("#monthInfo").textContent=DATA.thang||"—";$("#sessionsInfo").textContent=DATA.soBuoi||0;$("#subjectInfo").textContent=subject();
   $("#lessonList").innerHTML=(DATA.noiDungThang||[]).map(x=>`<div class="lesson-item"><b>${esc(x.ngayHoc)} • ${esc(x.tenBaiHoc)}</b>${esc(x.noiDungBaiHoc)}</div>`).join("");
   closeEdit();renderStudent();
- }catch(e){alert("Không lưu được: "+e.message)}
+ }catch(e){notify("Không lưu được: "+e.message,"error")}
 }
 $("#editBtn").onclick=openEdit;$("#editClose").onclick=closeEdit;$("#editCancel").onclick=closeEdit;$("#editSave").onclick=saveEdit;
 $("#editModal").addEventListener("click",e=>{if(e.target===$("#editModal"))closeEdit()});
@@ -409,9 +425,9 @@ function renderFailedBatches(){
 
 async function retryFailedBatch(index,button){
  const f=FAILED_BATCHES[index];if(!f)return;
- const d=CLASSES.find(x=>classKey(x)===f.classKey);if(!d)return alert("Không tìm thấy lớp của batch.");
+ const d=CLASSES.find(x=>classKey(x)===f.classKey);if(!d){notify("Không tìm thấy lớp của batch.","error");return}
  const exactStudents=f.names.map(n=>d.hocVien.find(s=>s.tenHocVien===n)).filter(Boolean);
- if(!exactStudents.length)return alert("Không tìm thấy học viên của batch.");
+ if(!exactStudents.length){notify("Không tìm thấy học viên của batch.","error");return}
  const old=button?.textContent||"Retry";if(button){button.disabled=true;button.textContent="Đang retry..."}
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),58000);
  try{
@@ -426,13 +442,13 @@ async function retryFailedBatch(index,button){
   if(missing.length)throw Error(`AI thiếu Đánh giá chuyên môn: ${missing.join(", ")}`);
   CLASS_AI[f.classKey]={...(CLASS_AI[f.classKey]||{}),...got};localStorage.setItem(`oiec_ai_${f.classKey}`,JSON.stringify(CLASS_AI[f.classKey]));
   FAILED_BATCHES.splice(index,1);renderFailedBatches();currentClassKey=$("#classSelect").value;syncCurrentClass();
- }catch(e){f.error=e?.name==="AbortError"?"Request quá 58 giây":e.message;renderFailedBatches();alert(`Retry batch lỗi: ${f.error}`)}
+ }catch(e){f.error=e?.name==="AbortError"?"Request quá 58 giây":e.message;renderFailedBatches();notify(`Retry batch lỗi: ${f.error}`,"error")}
  finally{clearTimeout(timer)}
 }
 
 $("#aiBtn").onclick=async()=>{
  if(!CLASSES.length)return;
- if(location.protocol==="file:"){alert("Generate AI cần chạy bản deploy trên Vercel.");return}
+ if(location.protocol==="file:"){notify("Generate AI cần chạy bản deploy trên Vercel.","error");return}
  saveCurrentMeta();const btn=$("#aiBtn"),old=btn.textContent;btn.disabled=true;FAILED_BATCHES=[];renderFailedBatches();
  const jobs=[];for(const d of CLASSES){const k=classKey(d);for(let i=0;i<d.hocVien.length;i+=5)jobs.push({classKey:k,className:d.tenLop,data:d,batch:Math.floor(i/5)+1,students:d.hocVien.slice(i,i+5)})}
  const WORKERS=1;let next=0,done=0,finished=0;const total=CLASSES.reduce((n,d)=>n+d.hocVien.length,0);
@@ -493,8 +509,8 @@ $("#aiBtn").onclick=async()=>{
   currentClassKey=$("#classSelect").value;
   syncCurrentClass();
   renderFailedBatches();
-  if(FAILED_BATCHES.length)alert(`Đã tạo AI ${done}/${total} học viên.\nCòn học viên bị thiếu — bấm Retry đúng batch.`);
-  else alert(`Đã tạo AI xong ${done}/${total} học viên.`);
+  if(FAILED_BATCHES.length)notify(`Đã tạo AI ${done}/${total} học viên. Còn học viên bị thiếu — bấm Retry đúng batch.`,"info");
+  else notify(`Đã tạo AI xong ${done}/${total} học viên.`,"success");
  }
  finally{btn.disabled=false;btn.textContent=old}
 };
@@ -541,7 +557,23 @@ body{display:block!important}
 </html>`;
 }
 
-async function downloadClassZip(d,classIndex,totalClasses){
+function centerCode(name){
+ const code=classCode(name);
+ const first=String(code||"").split("-")[0].trim().toUpperCase();
+ return safeFileName(first||"CENTER");
+}
+
+function groupClassesByCenter(){
+ const groups=new Map();
+ for(const d of CLASSES){
+   const code=centerCode(d.tenLop);
+   if(!groups.has(code))groups.set(code,[]);
+   groups.get(code).push(d);
+ }
+ return [...groups.entries()].map(([code,classes])=>({code,classes}));
+}
+
+async function buildClassZipBlob(d,classIndex,totalClasses,centerCodeValue){
  const k=classKey(d);
  DATA=d; AI=CLASS_AI[k]||{};
  currentClassKey=k;
@@ -551,7 +583,7 @@ async function downloadClassZip(d,classIndex,totalClasses){
  const reports=[];
  for(let i=0;i<d.hocVien.length;i++){
    const name=d.hocVien[i].tenHocVien;
-   $("#printBtn").textContent=`ZIP ${classIndex}/${totalClasses} • ${i+1}/${d.hocVien.length}`;
+   $("#printBtn").textContent=`${centerCodeValue} • lớp ${classIndex}/${totalClasses} • PDF ${i+1}/${d.hocVien.length}`;
    current=name; renderStudent(); await waitFrame();
    reports.push({name,html:reportHTML()});
  }
@@ -561,12 +593,36 @@ async function downloadClassZip(d,classIndex,totalClasses){
    body:JSON.stringify({reports,zipName})
  });
  if(!r.ok){
-   let msg=`Không tạo được ZIP ${zipName}.`;
+   let msg=`Không tạo được PDF lớp ${zipName}.`;
    try{const j=await r.json();msg=j.error||msg}catch(_){}
    throw Error(msg);
  }
- const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");
- a.href=url;a.download=`${zipName}.zip`;document.body.appendChild(a);a.click();a.remove();
+ return {className:zipName,blob:await r.blob()};
+}
+
+async function downloadCenterZip(group,groupIndex,totalGroups){
+ if(!window.JSZip)throw Error("Không tải được thư viện ZIP. Hãy refresh trang rồi thử lại.");
+ const outer=new JSZip();
+
+ for(let i=0;i<group.classes.length;i++){
+   const result=await buildClassZipBlob(group.classes[i],i+1,group.classes.length,group.code);
+   const classZip=await JSZip.loadAsync(result.blob);
+   const folder=outer.folder(result.className);
+
+   const entries=Object.values(classZip.files);
+   for(const entry of entries){
+     if(entry.dir)continue;
+     const pdf=await entry.async("blob");
+     folder.file(entry.name,pdf);
+   }
+ }
+
+ $("#printBtn").textContent=`Đóng gói ${group.code} • ${groupIndex}/${totalGroups}`;
+ const blob=await outer.generateAsync({type:"blob",compression:"DEFLATE"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;
+ a.download=`${safeFileName(group.code)}.zip`;
+ document.body.appendChild(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),2500);
  await new Promise(r=>setTimeout(r,500));
 }
@@ -574,7 +630,7 @@ async function downloadClassZip(d,classIndex,totalClasses){
 $("#printBtn").onclick=async()=>{
  if(!CLASSES.length)return;
  if(location.protocol==="file:"){
-   alert("Xuất ZIP PDF cần chạy bản đã deploy trên Vercel.");
+   notify("Xuất ZIP PDF cần chạy bản đã deploy trên Vercel.","error");
    return;
  }
  saveCurrentMeta();
@@ -582,9 +638,10 @@ $("#printBtn").onclick=async()=>{
  const oldKey=currentClassKey,oldStudent=current;
  btn.disabled=true;
  try{
-   for(let i=0;i<CLASSES.length;i++) await downloadClassZip(CLASSES[i],i+1,CLASSES.length);
-   alert(`Đã tạo ${CLASSES.length} ZIP riêng theo từng lớp.`);
- }catch(e){alert(e.message)}
+   const groups=groupClassesByCenter();
+   for(let i=0;i<groups.length;i++) await downloadCenterZip(groups[i],i+1,groups.length);
+   notify(`Đã tạo ${groups.length} ZIP theo mã Center. Mỗi lớp vẫn nằm trong folder riêng.`,"success");
+ }catch(e){notify(e.message,"error")}
  finally{
    currentClassKey=oldKey;DATA=CLASSES.find(x=>classKey(x)===oldKey)||CLASSES[0];
    AI=CLASS_AI[currentClassKey]||{};current=oldStudent||DATA.hocVien[0]?.tenHocVien;
