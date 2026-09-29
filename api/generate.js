@@ -3,8 +3,18 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function promptForBatch(common,students,subject){
  const names=students.map(s=>s.tenHocVien);
  return `Bạn là giáo viên KAPLA viết phiếu đánh giá học tập OIEC THEO THÁNG.
-Đánh giá RIÊNG từng học viên từ dữ liệu thực tế; không trộn dữ liệu học viên. Buổi vắng không phải điểm thấp. Không bịa thông tin. Câu ngắn, tự nhiên. Bộ môn: ${subject}.
-diemTieuChi AI chỉ dùng 4 hoặc 5. mucDoHoanThien chỉ "Đúng yêu cầu" hoặc "Có sáng tạo".
+Đánh giá RIÊNG từng học viên từ dữ liệu thực tế; không trộn dữ liệu học viên. Buổi vắng không phải điểm thấp và không được dùng buổi vắng để bịa thành tích. Không bịa thông tin. Bộ môn: ${subject}.
+
+QUAN TRỌNG VỀ MỨC NHẬN XÉT:
+- Phải dựa mạnh vào diemTrungBinh và điểm từng buổi có mặt/đi trễ trong dữ liệu EMS.
+- Điểm 9–10: ghi nhận tốt nhưng vẫn nêu một điểm nhỏ có thể phát triển thêm nếu dữ liệu phù hợp; không khen hoàn hảo đồng loạt.
+- Điểm 8–<9: nhìn chung tốt, nêu rõ phần làm được và một điểm cần cải thiện.
+- Điểm 7–<8: nhận xét cân bằng, dùng các cách nói như "đã nắm được", "cần luyện thêm", "chưa ổn định".
+- Dưới 7: không khen quá mức; nói nhẹ nhàng nhưng đúng mức độ, chỉ rõ nội dung cần củng cố.
+- Không dùng cùng một kiểu khen cho tất cả học viên.
+- Mỗi câu chuyenMon dài hơn bản cũ một chút: khoảng 18–28 từ, đủ 1 ý chính + 1 ý bổ sung ngắn, vẫn tự nhiên như giáo viên viết.
+mucDoHoanThien chỉ "Đúng yêu cầu" hoặc "Có sáng tạo".
+diemTieuChi sẽ được hệ thống tính từ điểm EMS sau khi AI trả kết quả; AI không quyết định điểm tiêu chí cuối cùng.
 
 BẮT BUỘC tạo chuyenMon đủ ĐÚNG 5 câu, không được để chuỗi rỗng, không được trả dấu "—".
 Thứ tự 5 câu trong chuyenMon:
@@ -14,6 +24,8 @@ Thứ tự 5 câu trong chuyenMon:
 4. Tiếp thu kiến thức & ghi nhớ: nhận xét mức độ hiểu, nhớ và vận dụng nội dung đã học.
 5. Khả năng làm việc nhóm: nhận xét việc phối hợp, trao đổi hoặc hỗ trợ trong quá trình học.
 Mỗi phần tử chuyenMon chỉ chứa NỘI DUNG nhận xét, KHÔNG lặp lại tên tiêu chí ở đầu câu.
+Không mặc định học viên "tốt", "tích cực", "nắm vững" nếu điểm EMS không hỗ trợ kết luận đó.
+Riêng sáng tạo phải thận trọng hơn: điểm EMS cao không đồng nghĩa sáng tạo cao; nếu dữ liệu không thể hiện ý tưởng riêng thì ghi nhận ở mức vừa và gợi ý phát triển thêm.
 Chỉ dựa trên dữ liệu thực tế của học viên. Nếu dữ liệu ít, viết nhận xét thận trọng từ phần có dữ liệu; tuyệt đối không để trống.
 
 Nội dung bảng:
@@ -67,6 +79,41 @@ function kind(msg=""){
  if(/timeout/i.test(msg))return "timeout";
  return "other";
 }
+
+function presentSessions(student){
+ return (student?.cacBuoi||[]).filter(b=>b?.maDiemDanh==="P"||b?.maDiemDanh==="L");
+}
+function emsAverage(student){
+ const present=presentSessions(student);
+ const scores=present.map(b=>Number(b?.diem)).filter(Number.isFinite);
+ if(scores.length)return scores.reduce((x,y)=>x+y,0)/scores.length;
+ const avg=Number(student?.diemTrungBinh);
+ return Number.isFinite(avg)?avg:null;
+}
+function weightedCriteria(student){
+ const avg=emsAverage(student);
+ // Không có buổi tham gia/không có điểm: không tự chấm tốt. Collector mới sẽ loại bé vắng cả tháng.
+ if(avg===null)return {
+  "Thái độ & tinh thần học tập":null,
+  "Kỹ năng hợp tác & giao tiếp":null,
+  "Kỹ năng thực hành & sáng tạo":null,
+  "Tính kiên trì & tự giác":null,
+  "Khả năng tiếp thu & vận dụng kiến thức":null,
+  "Tiến bộ cá nhân & đạo đức":5
+ };
+ const base=Math.max(0,Math.min(10,avg))/10*5;
+ const score=w=>Math.max(2,Math.min(5,Math.round(base*w)));
+ return {
+  "Thái độ & tinh thần học tập":score(0.90),
+  "Kỹ năng hợp tác & giao tiếp":score(0.85),
+  "Kỹ năng thực hành & sáng tạo":score(0.70),
+  "Tính kiên trì & tự giác":score(0.90),
+  "Khả năng tiếp thu & vận dụng kiến thức":score(0.95),
+  // Theo yêu cầu: mục đạo đức luôn hiển thị mức tối đa.
+  "Tiến bộ cá nhân & đạo đức":5
+ };
+}
+
 export default async function handler(req,res){
  if(req.method!=="POST")return res.status(405).json({error:"Method not allowed"});
  const key=process.env.GEMINI_API_KEY;if(!key)return res.status(500).json({error:"Chưa cấu hình GEMINI_API_KEY."});
@@ -88,6 +135,10 @@ export default async function handler(req,res){
        a.chuyenMon.some(x=>!String(x||"").trim() || String(x).trim()==="—");
    }).map(s=>s.tenHocVien);
    if(missing.length)throw Error(`${model}: thiếu/blank chuyenMon: ${missing.join(", ")}`);
+   // Điểm tiêu chí không giao cho AI tự khen/chấm nữa: tính trực tiếp từ điểm EMS.
+   for(const st of data.hocVien){
+     if(students[st.tenHocVien])students[st.tenHocVien].diemTieuChi=weightedCriteria(st);
+   }
    return res.status(200).json({students,model});
   }catch(e){
    last=e.message;lastKind=kind(last);

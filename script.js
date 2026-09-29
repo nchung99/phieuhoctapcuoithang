@@ -183,7 +183,18 @@ $("#teacherCustom").onchange=()=>{
 $("#center").onchange=()=>{
  const custom=$("#center").value==="__custom__";
  $("#centerCustom").style.display=custom?"block":"none";
- if(!custom)localStorage.setItem("oiec_center",$("#center").value);
+ if(!custom){
+   const v=$("#center").value;
+   localStorage.setItem("oiec_center",v);
+   // Khi đang làm nhiều JSON/lớp, Center vừa chọn sẽ là mặc định cho các lớp còn lại.
+   // Lớp nào sửa riêng bằng Edit sau đó vẫn giữ Center riêng của lớp đó.
+   for(const d of CLASSES){
+     const k=classKey(d);
+     CLASS_META[k]??={};
+     CLASS_META[k].center=v;
+     localStorage.setItem(`oiec_center_${k}`,v);
+   }
+ }
  saveCurrentMeta(); renderStudent();
 };
 $("#centerCustom").oninput=()=>{
@@ -193,7 +204,16 @@ $("#centerCustom").oninput=()=>{
 };
 $("#centerCustom").onchange=()=>{
  const v=$("#centerCustom").value.trim();
- if(v){saveCustom("center",v);addOption($("#center"),v);$("#center").value=v;$("#centerCustom").style.display="none";localStorage.setItem("oiec_center",v);renderStudent()}
+ if(v){
+   saveCustom("center",v);addOption($("#center"),v);$("#center").value=v;$("#centerCustom").style.display="none";localStorage.setItem("oiec_center",v);
+   for(const d of CLASSES){
+     const k=classKey(d);
+     CLASS_META[k]??={};
+     CLASS_META[k].center=v;
+     localStorage.setItem(`oiec_center_${k}`,v);
+   }
+   saveCurrentMeta();renderStudent();
+ }
 };
 
 const oldTeacher=localStorage.getItem("oiec_teacher")||"";
@@ -406,7 +426,7 @@ async function retryFailedBatch(index,button){
   if(missing.length)throw Error(`AI thiếu Đánh giá chuyên môn: ${missing.join(", ")}`);
   CLASS_AI[f.classKey]={...(CLASS_AI[f.classKey]||{}),...got};localStorage.setItem(`oiec_ai_${f.classKey}`,JSON.stringify(CLASS_AI[f.classKey]));
   FAILED_BATCHES.splice(index,1);renderFailedBatches();currentClassKey=$("#classSelect").value;syncCurrentClass();
- }catch(e){f.error=e?.name==="AbortError"?"Request quá 24 giây":e.message;renderFailedBatches();alert(`Retry batch lỗi: ${f.error}`)}
+ }catch(e){f.error=e?.name==="AbortError"?"Request quá 58 giây":e.message;renderFailedBatches();alert(`Retry batch lỗi: ${f.error}`)}
  finally{clearTimeout(timer)}
 }
 
@@ -431,11 +451,51 @@ $("#aiBtn").onclick=async()=>{
    }).map(s=>s.tenHocVien);
    if(missing.length)throw Error(`AI thiếu Đánh giá chuyên môn: ${missing.join(", ")}`);
    CLASS_AI[job.classKey]={...(CLASS_AI[job.classKey]||{}),...got};localStorage.setItem(`oiec_ai_${job.classKey}`,JSON.stringify(CLASS_AI[job.classKey]));done+=Object.keys(got).length;
-  }catch(e){fail(job,e?.name==="AbortError"?"Request quá 24 giây":e.message)}
+  }catch(e){fail(job,e?.name==="AbortError"?"Request quá 58 giây":e.message)}
   finally{clearTimeout(timer);finished++;update()}
  }
  async function worker(){while(true){const i=next++;if(i>=jobs.length)return;await run(jobs[i])}}
- try{update();await Promise.all(Array.from({length:WORKERS},()=>worker()));currentClassKey=$("#classSelect").value;syncCurrentClass();renderFailedBatches();if(FAILED_BATCHES.length)alert(`Đã tạo AI ${done}/${total} học viên.\nCó ${FAILED_BATCHES.length} batch lỗi — bấm Retry đúng batch.`);else alert(`Đã tạo AI xong ${done}/${total} học viên.`)}
+ try{
+  update();
+  await Promise.all(Array.from({length:WORKERS},()=>worker()));
+
+  // Kiểm tra lại TỪNG học viên sau khi tất cả batch hoàn tất.
+  // Không dùng số lượng key Gemini trả về để kết luận "đủ 8/8".
+  const failedNames=new Set(FAILED_BATCHES.flatMap(x=>x.names||[]));
+  for(const d of CLASSES){
+   const k=classKey(d),ai=CLASS_AI[k]||{};
+   const missing=[];
+   for(const st of d.hocVien){
+    const a=ai[st.tenHocVien];
+    const ok=a && Array.isArray(a.chuyenMon) && a.chuyenMon.length===5 &&
+      a.chuyenMon.every(x=>String(x||"").trim() && String(x).trim()!=="—");
+    if(!ok && !failedNames.has(st.tenHocVien))missing.push(st.tenHocVien);
+   }
+   for(let i=0;i<missing.length;i+=5){
+    FAILED_BATCHES.push({
+     classKey:k,className:d.tenLop,batch:`thiếu-${Math.floor(i/5)+1}`,
+     names:missing.slice(i,i+5),error:"Thiếu kết quả sau kiểm tra cuối"
+    });
+   }
+  }
+
+  // Tính lại số học viên thực sự có kết quả hợp lệ.
+  done=0;
+  for(const d of CLASSES){
+   const ai=CLASS_AI[classKey(d)]||{};
+   for(const st of d.hocVien){
+    const a=ai[st.tenHocVien];
+    if(a && Array.isArray(a.chuyenMon) && a.chuyenMon.length===5 &&
+      a.chuyenMon.every(x=>String(x||"").trim() && String(x).trim()!=="—"))done++;
+   }
+  }
+
+  currentClassKey=$("#classSelect").value;
+  syncCurrentClass();
+  renderFailedBatches();
+  if(FAILED_BATCHES.length)alert(`Đã tạo AI ${done}/${total} học viên.\nCòn học viên bị thiếu — bấm Retry đúng batch.`);
+  else alert(`Đã tạo AI xong ${done}/${total} học viên.`);
+ }
  finally{btn.disabled=false;btn.textContent=old}
 };
 function safeFileName(name){
