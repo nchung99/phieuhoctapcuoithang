@@ -5,6 +5,17 @@ function promptForBatch(common,students,subject){
  return `Bạn là giáo viên KAPLA viết phiếu đánh giá học tập OIEC THEO THÁNG.
 Đánh giá RIÊNG từng học viên từ dữ liệu thực tế; không trộn dữ liệu học viên. Buổi vắng không phải điểm thấp. Không bịa thông tin. Câu ngắn, tự nhiên. Bộ môn: ${subject}.
 diemTieuChi AI chỉ dùng 4 hoặc 5. mucDoHoanThien chỉ "Đúng yêu cầu" hoặc "Có sáng tạo".
+
+BẮT BUỘC tạo chuyenMon đủ ĐÚNG 5 câu, không được để chuỗi rỗng, không được trả dấu "—".
+Thứ tự 5 câu trong chuyenMon:
+1. Tư duy Logic trong lập trình: nhận xét riêng về tư duy logic của học viên trong tháng.
+2. Phân tích & xử lý vấn đề: nhận xét khả năng phân tích, thử cách làm và xử lý lỗi/vấn đề.
+3. Khả năng sáng tạo: nhận xét cách học viên phát triển hoặc điều chỉnh sản phẩm/ý tưởng.
+4. Tiếp thu kiến thức & ghi nhớ: nhận xét mức độ hiểu, nhớ và vận dụng nội dung đã học.
+5. Khả năng làm việc nhóm: nhận xét việc phối hợp, trao đổi hoặc hỗ trợ trong quá trình học.
+Mỗi phần tử chuyenMon chỉ chứa NỘI DUNG nhận xét, KHÔNG lặp lại tên tiêu chí ở đầu câu.
+Chỉ dựa trên dữ liệu thực tế của học viên. Nếu dữ liệu ít, viết nhận xét thận trọng từ phần có dữ liệu; tuyệt đối không để trống.
+
 Nội dung bảng:
 - KHÔNG tạo nội dung cho hàng 1 của cột Kiến thức - Lập trình và Kỹ năng bộ môn. Hai ô này được giao diện tự điền cố định theo Robotics/Coding.
 - hocSinhCoThe: bắt đầu bằng "Học sinh có thể:" và đánh giá kiến thức/lập trình học viên thực sự nắm được trong tháng.
@@ -71,8 +82,12 @@ export default async function handler(req,res){
   const model=tries[i];
   try{
    const out=await callWithRetry(key,model,prompt),students=out?.students||{};
-   const missing=data.hocVien.filter(s=>!students[s.tenHocVien]).map(s=>s.tenHocVien);
-   if(missing.length)throw Error(`${model}: thiếu ${missing.join(", ")}`);
+   const missing=data.hocVien.filter(s=>{
+     const a=students[s.tenHocVien];
+     return !a || !Array.isArray(a.chuyenMon) || a.chuyenMon.length!==5 ||
+       a.chuyenMon.some(x=>!String(x||"").trim() || String(x).trim()==="—");
+   }).map(s=>s.tenHocVien);
+   if(missing.length)throw Error(`${model}: thiếu/blank chuyenMon: ${missing.join(", ")}`);
    return res.status(200).json({students,model});
   }catch(e){
    last=e.message;lastKind=kind(last);

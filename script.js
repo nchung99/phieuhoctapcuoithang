@@ -398,8 +398,12 @@ async function retryFailedBatch(index,button){
   const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:{...d,hocVien:exactStudents},subject:subjectOfData(d),batch:f.batch}),signal:controller.signal});
   const raw=await r.text();let out;try{out=JSON.parse(raw)}catch(_){throw Error(raw.slice(0,180)||`HTTP ${r.status}`)}
   if(!r.ok||out.error)throw Error(out.error||`HTTP ${r.status}`);
-  const got=out.students||{},missing=exactStudents.filter(s=>!got[s.tenHocVien]).map(s=>s.tenHocVien);
-  if(missing.length)throw Error(`AI thiếu kết quả: ${missing.join(", ")}`);
+  const got=out.students||{},missing=exactStudents.filter(s=>{
+    const a=got[s.tenHocVien];
+    return !a || !Array.isArray(a.chuyenMon) || a.chuyenMon.length!==5 ||
+      a.chuyenMon.some(x=>!String(x||"").trim() || String(x).trim()==="—");
+  }).map(s=>s.tenHocVien);
+  if(missing.length)throw Error(`AI thiếu Đánh giá chuyên môn: ${missing.join(", ")}`);
   CLASS_AI[f.classKey]={...(CLASS_AI[f.classKey]||{}),...got};localStorage.setItem(`oiec_ai_${f.classKey}`,JSON.stringify(CLASS_AI[f.classKey]));
   FAILED_BATCHES.splice(index,1);renderFailedBatches();currentClassKey=$("#classSelect").value;syncCurrentClass();
  }catch(e){f.error=e?.name==="AbortError"?"Request quá 24 giây":e.message;renderFailedBatches();alert(`Retry batch lỗi: ${f.error}`)}
@@ -420,7 +424,12 @@ $("#aiBtn").onclick=async()=>{
    const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:{...job.data,hocVien:job.students},subject:subjectOfData(job.data),batch:job.batch}),signal:controller.signal});
    const raw=await r.text();let out;try{out=JSON.parse(raw)}catch(_){throw Error(raw.slice(0,180)||`HTTP ${r.status}`)}
    if(!r.ok||out.error)throw Error(out.error||`HTTP ${r.status}`);
-   const got=out.students||{},missing=job.students.filter(s=>!got[s.tenHocVien]).map(s=>s.tenHocVien);if(missing.length)throw Error(`AI thiếu kết quả: ${missing.join(", ")}`);
+   const got=out.students||{},missing=job.students.filter(s=>{
+     const a=got[s.tenHocVien];
+     return !a || !Array.isArray(a.chuyenMon) || a.chuyenMon.length!==5 ||
+       a.chuyenMon.some(x=>!String(x||"").trim() || String(x).trim()==="—");
+   }).map(s=>s.tenHocVien);
+   if(missing.length)throw Error(`AI thiếu Đánh giá chuyên môn: ${missing.join(", ")}`);
    CLASS_AI[job.classKey]={...(CLASS_AI[job.classKey]||{}),...got};localStorage.setItem(`oiec_ai_${job.classKey}`,JSON.stringify(CLASS_AI[job.classKey]));done+=Object.keys(got).length;
   }catch(e){fail(job,e?.name==="AbortError"?"Request quá 24 giây":e.message)}
   finally{clearTimeout(timer);finished++;update()}

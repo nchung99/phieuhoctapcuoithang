@@ -27,3 +27,8 @@ v8.7 Gemini stability only (UI/report unchanged from v8.6):
 - Daily/free-tier quota errors switch model immediately instead of retrying the same model.
 - Model timeout 10s.
 - Gemini 3.x generation config left at defaults except JSON response MIME type.
+
+FIX CHUYEN MON:
+- Prompt bắt buộc sinh đủ 5 nhận xét ĐÁNH GIÁ CHUYÊN MÔN.
+- API/client không chấp nhận chuyenMon rỗng hoặc thiếu; sẽ thử model/batch lại thay vì lưu dấu —.
+- Không thay đổi UI, PDF, subject dropdown hoặc bảng năng lực.
