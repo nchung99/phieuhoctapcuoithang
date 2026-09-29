@@ -1,0 +1,5 @@
+Chỉ chỉnh layout để đủ 6 dòng tiêu chí trên 1 trang A4:
+- Giảm khoảng cách dọc, không giảm cỡ chữ.
+- Thu nhẹ chiều cao bảng năng lực.
+- Nhích phần tiêu chí chung lên.
+- Không đổi AI, score, Center, PDF logic, batch hay nội dung.

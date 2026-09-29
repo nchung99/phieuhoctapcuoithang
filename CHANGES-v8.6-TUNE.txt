@@ -1,0 +1,14 @@
+Bản thử chỉnh theo feedback:
+1) 5 câu chuyên môn dài hơn nhẹ (18–28 từ/câu), bớt khen đồng loạt.
+2) Khi chọn Center, Center đó được áp làm mặc định cho toàn bộ JSON/lớp đang import.
+3) Prompt bắt buộc dựa vào điểm EMS; điểm thấp phải có nội dung cần cải thiện.
+4) Điểm 6 tiêu chí được tính bằng trọng số từ điểm EMS, không để AI tự chấm:
+   - Thái độ: 0.90
+   - Hợp tác: 0.85
+   - Thực hành & sáng tạo: 0.70
+   - Kiên trì: 0.90
+   - Tiếp thu & vận dụng: 0.95
+   - Tiến bộ cá nhân & đạo đức: luôn 5
+   Điểm làm tròn về thang 1–5, tối thiểu 2 cho các tiêu chí có điểm EMS.
+5) Collector mới loại học viên vắng cả 4/4 buổi; vắng một phần vẫn giữ, chỉ tính điểm các buổi P/L.
+UI/PDF/batch giữ nguyên.
