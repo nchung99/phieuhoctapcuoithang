@@ -36,9 +36,10 @@ function applyEditedData(k,d){
  let saved=null;try{saved=JSON.parse(localStorage.getItem(editedDataKey(k))||"null")}catch(_){}
  if(!saved)return d;
  if(saved.thang!=null)d.thang=saved.thang;
- if(saved.__manualSubject)d.__manualSubject=saved.__manualSubject;
- if(saved.__manualProgram)d.__manualProgram=saved.__manualProgram;
- if(saved.chuongTrinh)d.chuongTrinh=saved.chuongTrinh;
+ // Nếu JSON mới đã có chương trình từ Collector thì ưu tiên auto mapping mới.
+ if(!d.chuongTrinh && saved.__manualSubject)d.__manualSubject=saved.__manualSubject;
+ if(!d.chuongTrinh && saved.__manualProgram)d.__manualProgram=saved.__manualProgram;
+ if(!d.chuongTrinh && saved.chuongTrinh)d.chuongTrinh=saved.chuongTrinh;
  if(Array.isArray(saved.noiDungThang))d.noiDungThang=saved.noiDungThang;
  if(Array.isArray(saved.hocVien)){
    saved.hocVien.forEach((x,i)=>{if(d.hocVien?.[i]&&x?.tenHocVien)d.hocVien[i].tenHocVien=x.tenHocVien});
@@ -83,7 +84,7 @@ function syncCurrentClass(){
  renderStudent();
 }
 const PROGRAM_MAP = [
- {re:/^RBT\.\s*STAGE\s*[12]$/i,subject:"Robotics",tool:"LEGO Duplo",top1:"Công cụ sử dụng: LEGO Duplo",top2:"Học sinh có thể lắp ráp: Các mô hình theo chủ đề đã học."},
+ {re:/^RBT\.?\s*STAGE\s*[12]$/i,subject:"Robotics",tool:"LEGO Duplo",top1:"Công cụ sử dụng: LEGO Duplo",top2:"Học sinh có thể lắp ráp: Các mô hình theo chủ đề đã học."},
  {re:/^TINY\s+CODER\s*[12]$/i,subject:"Coding",tool:"Scratch Jr",top1:"Phần mềm sử dụng: Scratch Jr",top2:"Học sinh có thể lập trình: Câu chuyện, hoạt cảnh và trò chơi đơn giản theo chủ đề đã học."},
  {re:/^ESSENTIAL\s*[1-4]$/i,subject:"Robotics",tool:"LEGO SPIKE Essential",top1:"Công cụ sử dụng: LEGO SPIKE Essential",top2:"Học sinh có thể lắp ráp và lập trình: Các mô hình robot theo chủ đề đã học."},
  {re:/^PRIME\s*[1-4]$/i,subject:"Robotics",tool:"LEGO SPIKE Prime",top1:"Công cụ sử dụng: LEGO SPIKE Prime",top2:"Học sinh có thể lắp ráp, lập trình và điều khiển: Các mô hình robot theo yêu cầu của bài học."},
@@ -91,19 +92,38 @@ const PROGRAM_MAP = [
  {re:/^MINECRAFT\s*[12]$/i,subject:"Coding",tool:"Minecraft Education",top1:"Phần mềm sử dụng: Minecraft Education",top2:"Học sinh có thể lập trình: Xây dựng và hoàn thành các nhiệm vụ trong Minecraft."},
  {re:/^SENIOR\s+CODER\s*[1-3]$/i,subject:"Coding",tool:"Python",top1:"Ngôn ngữ sử dụng: Python",top2:"Học sinh có thể lập trình: Viết và chạy các chương trình Python theo nội dung đã học."}
 ];
-function normalizeProgram(v){return String(v||"").trim().replace(/\s+/g," ")}
+function normalizeProgram(v){
+ return String(v||"").toUpperCase().replace(/[–—]/g,"-").replace(/\s+/g," ").trim()
+   .replace(/^RBT\s*\.\s*STAGE\s*/i,"RBT.STAGE ")
+   .replace(/^(TINY|JUNIOR|SENIOR)\s*CODER\s*/i,(m,p)=>`${p} CODER `)
+   .replace(/^(ESSENTIAL|PRIME|MINECRAFT)\s*/i,(m,p)=>`${p} `)
+   .trim();
+}
 function programFromActivity(v){
- let x=String(v||"").trim();
- x=x.replace(/^\s*\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}\s*(?:AM|PM)?\s*:\s*/i,"");
- x=x.replace(/\s*\([^)]*\)\s*$/i,"");
- const parts=x.split(/\s+-\s+/).map(t=>t.trim()).filter(Boolean);
- return normalizeProgram(parts.length>=3?parts.slice(2).join(" - "):(parts.length?parts[parts.length-1]:x));
+ const raw=String(v||"").replace(/[–—]/g,"-").replace(/\s+/g," ").trim();
+ // Không suy bộ môn từ chữ ROBOTIC vì EMS dùng chữ này cho cả Coding.
+ // Tìm trực tiếp tên chương trình/level ở bất kỳ vị trí nào trong activity.
+ const patterns=[
+   /RBT\s*\.\s*STAGE\s*[12]/i,
+   /TINY\s+CODER\s*[12]/i,
+   /ESSENTIAL\s*[1-4]/i,
+   /PRIME\s*[1-4]/i,
+   /JUNIOR\s+CODER\s*[1-3]/i,
+   /MINECRAFT\s*[12]/i,
+   /SENIOR\s+CODER\s*[1-3]/i
+ ];
+ for(const re of patterns){const m=raw.match(re);if(m)return normalizeProgram(m[0]);}
+ return "";
 }
 function detectedProgram(d=DATA){
  if(d?.__manualProgram)return normalizeProgram(d.__manualProgram);
- if(d?.chuongTrinh)return normalizeProgram(d.chuongTrinh);
- for(const l of (d?.noiDungThang||[])){const p=programFromActivity(l.tenBuoiHoc);if(p)return p}
- return "";
+ if(d?.chuongTrinh){const p=programFromActivity(d.chuongTrinh)||normalizeProgram(d.chuongTrinh);if(p)return p;}
+ const found=[];
+ for(const l of (d?.noiDungThang||[])){const p=programFromActivity(l.tenBuoiHoc);if(p)found.push(p)}
+ if(!found.length)return "";
+ // 4 buổi cùng chương trình; nếu EMS có lệch, dùng giá trị xuất hiện nhiều nhất.
+ const count={};for(const p of found)count[p]=(count[p]||0)+1;
+ return Object.entries(count).sort((a,b)=>b[1]-a[1])[0][0];
 }
 function programConfig(d=DATA){
  const program=detectedProgram(d);
@@ -113,17 +133,6 @@ function programConfig(d=DATA){
 function subject(){
  if(DATA?.__manualSubject)return DATA.__manualSubject;
  const mapped=programConfig(DATA);if(mapped)return mapped.subject;
- const lessons=(DATA?.noiDungThang||[]);
- const activity=lessons.map(x=>x.tenBuoiHoc||"").join(" ");
- const content=lessons.map(x=>`${x.tenBaiHoc||""} ${x.noiDungBaiHoc||""}`).join(" ");
-
- // Ưu tiên bộ môn ghi trực tiếp trên EMS.
- if(/ROBOTIC/i.test(activity)) return "Robotics";
- if(/CODING/i.test(activity)) return "Coding";
-
- // Chỉ dùng nội dung bài học làm phương án dự phòng.
- if(/LEGO|Spike|robot|cảm biến|động cơ|lắp ráp/i.test(content)) return "Robotics";
- if(/Scratch|lập trình|tọa độ|khối lệnh|key pressed|nhân vật/i.test(content)) return "Coding";
  return "Coding / Robotics";
 }
 function selectedTeacher(){
@@ -474,13 +483,6 @@ let FAILED_BATCHES=[];
 function subjectOfData(d){
  if(d?.__manualSubject)return d.__manualSubject;
  const mapped=programConfig(d);if(mapped)return mapped.subject;
- const lessons=(d?.noiDungThang||[]);
- const activity=lessons.map(x=>x.tenBuoiHoc||"").join(" ");
- const content=lessons.map(x=>`${x.tenBaiHoc||""} ${x.noiDungBaiHoc||""}`).join(" ");
- if(/ROBOTIC/i.test(activity))return "Robotics";
- if(/CODING/i.test(activity))return "Coding";
- if(/LEGO|Spike|robot|cảm biến|động cơ|lắp ráp/i.test(content))return "Robotics";
- if(/Scratch|lập trình|tọa độ|khối lệnh|key pressed|nhân vật/i.test(content))return "Coding";
  return "Coding / Robotics";
 }
 
