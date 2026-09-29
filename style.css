@@ -111,3 +111,15 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef2f6;color:#1
  body{background:#fff}.topbar,.panel{display:none!important}.workspace{display:block;padding:0}.preview-wrap{overflow:visible;padding:0}
  .report.exact-oiec{box-shadow:none!important;margin:0!important;width:210mm!important;height:297mm!important}
 }
+
+
+/* Fix: 1–5 align exactly above the five circle columns */
+.criteria-legend{
+  width:100% !important;
+  margin-left:0 !important;
+  grid-template-columns:5mm calc(56% - 5mm) repeat(5,8.8%) !important;
+  justify-items:center;
+}
+.criteria-legend > :nth-child(2){
+  justify-self:start;
+}
