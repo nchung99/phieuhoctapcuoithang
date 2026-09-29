@@ -84,7 +84,7 @@ function syncCurrentClass(){
  renderStudent();
 }
 const PROGRAM_MAP = [
- {re:/^RBT\.?\s*STAGE\s*[12]$/i,subject:"Robotics",tool:"LEGO Duplo",top1:"Công cụ sử dụng: LEGO Duplo",top2:"Học sinh có thể lắp ráp: Các mô hình theo chủ đề đã học."},
+ {re:/^(?:RBT\.?\s*)?STAGE\s*[12]$/i,subject:"Robotics",tool:"LEGO Duplo",top1:"Công cụ sử dụng: LEGO Duplo",top2:"Học sinh có thể lắp ráp: Các mô hình theo chủ đề đã học."},
  {re:/^TINY\s+CODER\s*[12]$/i,subject:"Coding",tool:"Scratch Jr",top1:"Phần mềm sử dụng: Scratch Jr",top2:"Học sinh có thể lập trình: Câu chuyện, hoạt cảnh và trò chơi đơn giản theo chủ đề đã học."},
  {re:/^ESSENTIAL\s*[1-4]$/i,subject:"Robotics",tool:"LEGO SPIKE Essential",top1:"Công cụ sử dụng: LEGO SPIKE Essential",top2:"Học sinh có thể lắp ráp và lập trình: Các mô hình robot theo chủ đề đã học."},
  {re:/^PRIME\s*[1-4]$/i,subject:"Robotics",tool:"LEGO SPIKE Prime",top1:"Công cụ sử dụng: LEGO SPIKE Prime",top2:"Học sinh có thể lắp ráp, lập trình và điều khiển: Các mô hình robot theo yêu cầu của bài học."},
@@ -94,7 +94,7 @@ const PROGRAM_MAP = [
 ];
 function normalizeProgram(v){
  return String(v||"").toUpperCase().replace(/[–—]/g,"-").replace(/\s+/g," ").trim()
-   .replace(/^RBT\s*\.\s*STAGE\s*/i,"RBT.STAGE ")
+   .replace(/^(?:RBT\s*\.\s*)?STAGE\s*/i,"RBT.STAGE ")
    .replace(/^(TINY|JUNIOR|SENIOR)\s*CODER\s*/i,(m,p)=>`${p} CODER `)
    .replace(/^(ESSENTIAL|PRIME|MINECRAFT)\s*/i,(m,p)=>`${p} `)
    .trim();
@@ -104,7 +104,7 @@ function programFromActivity(v){
  // Không suy bộ môn từ chữ ROBOTIC vì EMS dùng chữ này cho cả Coding.
  // Tìm trực tiếp tên chương trình/level ở bất kỳ vị trí nào trong activity.
  const patterns=[
-   /RBT\s*\.\s*STAGE\s*[12]/i,
+   /(?:RBT\s*\.\s*)?STAGE\s*[12]/i,
    /TINY\s+CODER\s*[12]/i,
    /ESSENTIAL\s*[1-4]/i,
    /PRIME\s*[1-4]/i,
