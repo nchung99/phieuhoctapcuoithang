@@ -23,6 +23,26 @@ function notify(message,type="info"){
 function esc(s){return String(s??"").replace(/[&<>"\']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\'":"&#039;"}[m]))}
 
 function classKey(d){return `${d?.tenLop||"Lop"}__${d?.thang||""}`}
+function editedDataKey(k){return `oiec_edited_data_${k}`}
+function saveEditedData(k,d){
+ if(!k||!d)return;
+ localStorage.setItem(editedDataKey(k),JSON.stringify({
+   tenLop:d.tenLop,thang:d.thang,__manualSubject:d.__manualSubject||"",
+   noiDungThang:d.noiDungThang||[],
+   hocVien:(d.hocVien||[]).map(x=>({tenHocVien:x.tenHocVien}))
+ }));
+}
+function applyEditedData(k,d){
+ let saved=null;try{saved=JSON.parse(localStorage.getItem(editedDataKey(k))||"null")}catch(_){}
+ if(!saved)return d;
+ if(saved.thang!=null)d.thang=saved.thang;
+ if(saved.__manualSubject)d.__manualSubject=saved.__manualSubject;
+ if(Array.isArray(saved.noiDungThang))d.noiDungThang=saved.noiDungThang;
+ if(Array.isArray(saved.hocVien)){
+   saved.hocVien.forEach((x,i)=>{if(d.hocVien?.[i]&&x?.tenHocVien)d.hocVien[i].tenHocVien=x.tenHocVien});
+ }
+ return d;
+}
 function classCode(name){
  const s=String(name||"LOP").trim();
  // EMS có thể thêm nhóm tuổi sau mã lớp, ví dụ:
@@ -298,7 +318,7 @@ $("#jsonFile").onchange=async e=>{
    if(!Array.isArray(d.hocVien)||!d.hocVien.length)throw Error(`${f.name}: không có học viên.`);
    loaded.push(d);
   }
-  CLASSES=loaded;
+  CLASSES=loaded.map(d=>applyEditedData(classKey(d),d));
   CLASS_AI={};
   CLASS_META={};
   for(const d of CLASSES){
@@ -400,6 +420,9 @@ function saveEdit(){
   localStorage.setItem(`oiec_ai_${currentClassKey}`,JSON.stringify(AI));
   localStorage.setItem(`oiec_manual_${currentClassKey}`,JSON.stringify(MANUAL[currentClassKey]||{}));
   localStorage.setItem(`oiec_teacher_${currentClassKey}`,teacher);localStorage.setItem(`oiec_center_${currentClassKey}`,center);
+  // Lưu cả các mục Edit thuộc dữ liệu phiếu để reload/import lại vẫn giữ.
+  if(newKey!==oldKey)localStorage.removeItem(editedDataKey(oldKey));
+  saveEditedData(currentClassKey,DATA);
 
   // Rebuild dropdowns because class/month/name may have changed.
   $("#classSelect").innerHTML=CLASSES.map(d=>`<option value="${esc(classKey(d))}">${esc(d.tenLop)} • ${esc(d.thang)}</option>`).join("");
