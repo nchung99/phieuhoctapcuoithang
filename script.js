@@ -626,13 +626,21 @@ async function downloadCenterZip(group,groupIndex,totalGroups){
  for(let i=0;i<group.classes.length;i++){
    const result=await buildClassZipBlob(group.classes[i],i+1,group.classes.length,group.code);
    const classZip=await JSZip.loadAsync(result.blob);
-   const folder=outer.folder(result.className);
 
    const entries=Object.values(classZip.files);
    for(const entry of entries){
      if(entry.dir)continue;
      const pdf=await entry.async("blob");
-     folder.file(entry.name,pdf);
+     let fileName=entry.name;
+
+     // PDF nằm trực tiếp trong ZIP Center, không chia folder theo lớp.
+     // Nếu trùng tên học viên giữa các lớp cùng Center thì thêm mã lớp để tránh ghi đè.
+     if(outer.file(fileName)){
+       const isPdf=fileName.toLowerCase().endsWith(".pdf");
+       const base=isPdf?fileName.slice(0,-4):fileName;
+       fileName=`${base} - ${result.className}${isPdf?".pdf":""}`;
+     }
+     outer.file(fileName,pdf);
    }
  }
 
@@ -659,7 +667,7 @@ $("#printBtn").onclick=async()=>{
  try{
    const groups=groupClassesByCenter();
    for(let i=0;i<groups.length;i++) await downloadCenterZip(groups[i],i+1,groups.length);
-   notify(`Đã tạo ${groups.length} ZIP theo mã Center. Mỗi lớp vẫn nằm trong folder riêng.`,"success");
+   notify(`Đã tạo ${groups.length} ZIP theo mã Center.`,"success");
  }catch(e){notify(e.message,"error")}
  finally{
    currentClassKey=oldKey;DATA=CLASSES.find(x=>classKey(x)===oldKey)||CLASSES[0];
