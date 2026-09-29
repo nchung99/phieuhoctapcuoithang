@@ -113,13 +113,13 @@ body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#eef2f6;color:#1
 }
 
 
-/* Fix: 1–5 align exactly above the five circle columns */
+
+/* Criteria alignment V2: preserve "Mức đánh giá" position; move only 1–5 */
 .criteria-legend{
-  width:100% !important;
-  margin-left:0 !important;
-  grid-template-columns:5mm calc(56% - 5mm) repeat(5,8.8%) !important;
-  justify-items:center;
+  margin-left:15mm !important;
+  grid-template-columns:5mm 24mm repeat(5,9mm) !important;
 }
-.criteria-legend > :nth-child(2){
-  justify-self:start;
+.criteria-legend > :nth-child(n+3){
+  position:relative;
+  left:4.15mm;
 }
