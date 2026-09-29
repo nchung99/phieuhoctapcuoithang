@@ -12,7 +12,13 @@ QUAN TRỌNG VỀ MỨC NHẬN XÉT:
 - Điểm 7–<8: nhận xét cân bằng, dùng các cách nói như "đã nắm được", "cần luyện thêm", "chưa ổn định".
 - Dưới 7: không khen quá mức; nói nhẹ nhàng nhưng đúng mức độ, chỉ rõ nội dung cần củng cố.
 - Không dùng cùng một kiểu khen cho tất cả học viên.
-- Mỗi câu chuyenMon dài hơn bản cũ một chút: khoảng 18–28 từ, đủ 1 ý chính + 1 ý bổ sung ngắn, vẫn tự nhiên như giáo viên viết.
+- Mỗi câu chuyenMon khoảng 14–22 từ, gọn như giáo viên tự ghi nhận xét, không viết thành đoạn văn.
+- Văn phong tự nhiên, gần với cách giáo viên nói với phụ huynh; ưu tiên câu đơn giản, rõ ý.
+- Có thể dùng các cách nói như "Con đã nắm được...", "Con làm được...", "Con còn cần luyện thêm...", "Ở một số bài...", "Khi làm bài...", "Con đôi lúc còn...".
+- Hạn chế các cụm sáo/khuôn mẫu như "thể hiện khả năng", "cho thấy sự", "phát huy tốt", "vận dụng linh hoạt", "có sự tiến bộ rõ rệt", "tích cực tham gia".
+- Không ép câu nào cũng theo kiểu khen trước rồi mới góp ý. Điểm chưa ổn thì nói nhẹ nhưng thẳng.
+- Tránh nối nhiều vế bằng "đồng thời", "bên cạnh đó", "qua đó"; mỗi câu chỉ 1 ý chính và tối đa 1 ý phụ.
+- 5 tiêu chí không được mở đầu và kết câu theo cùng một khuôn. Tránh cảm giác copy mẫu.
 mucDoHoanThien chỉ "Đúng yêu cầu" hoặc "Có sáng tạo".
 diemTieuChi sẽ được hệ thống tính từ điểm EMS sau khi AI trả kết quả; AI không quyết định điểm tiêu chí cuối cùng.
 
