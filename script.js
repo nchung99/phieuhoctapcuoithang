@@ -632,9 +632,6 @@ async function downloadCenterZip(group,groupIndex,totalGroups){
      if(entry.dir)continue;
      const pdf=await entry.async("blob");
      let fileName=entry.name;
-
-     // PDF nằm trực tiếp trong ZIP Center, không chia folder theo lớp.
-     // Nếu trùng tên học viên giữa các lớp cùng Center thì thêm mã lớp để tránh ghi đè.
      if(outer.file(fileName)){
        const isPdf=fileName.toLowerCase().endsWith(".pdf");
        const base=isPdf?fileName.slice(0,-4):fileName;
