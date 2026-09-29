@@ -393,7 +393,7 @@ async function retryFailedBatch(index,button){
  const exactStudents=f.names.map(n=>d.hocVien.find(s=>s.tenHocVien===n)).filter(Boolean);
  if(!exactStudents.length)return alert("Không tìm thấy học viên của batch.");
  const old=button?.textContent||"Retry";if(button){button.disabled=true;button.textContent="Đang retry..."}
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),24000);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),58000);
  try{
   const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:{...d,hocVien:exactStudents},subject:subjectOfData(d),batch:f.batch}),signal:controller.signal});
   const raw=await r.text();let out;try{out=JSON.parse(raw)}catch(_){throw Error(raw.slice(0,180)||`HTTP ${r.status}`)}
@@ -415,11 +415,11 @@ $("#aiBtn").onclick=async()=>{
  if(location.protocol==="file:"){alert("Generate AI cần chạy bản deploy trên Vercel.");return}
  saveCurrentMeta();const btn=$("#aiBtn"),old=btn.textContent;btn.disabled=true;FAILED_BATCHES=[];renderFailedBatches();
  const jobs=[];for(const d of CLASSES){const k=classKey(d);for(let i=0;i<d.hocVien.length;i+=5)jobs.push({classKey:k,className:d.tenLop,data:d,batch:Math.floor(i/5)+1,students:d.hocVien.slice(i,i+5)})}
- const WORKERS=Math.min(2,jobs.length);let next=0,done=0,finished=0;const total=CLASSES.reduce((n,d)=>n+d.hocVien.length,0);
+ const WORKERS=1;let next=0,done=0,finished=0;const total=CLASSES.reduce((n,d)=>n+d.hocVien.length,0);
  const update=()=>btn.textContent=`AI ${finished}/${jobs.length} batch • ${done}/${total} học viên • ${WORKERS} luồng`;
  function fail(job,error){FAILED_BATCHES.push({classKey:job.classKey,className:job.className,batch:job.batch,names:job.students.map(s=>s.tenHocVien),error:error||"lỗi AI"});renderFailedBatches()}
  async function run(job){
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),24000);
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),58000);
   try{
    const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:{...job.data,hocVien:job.students},subject:subjectOfData(job.data),batch:job.batch}),signal:controller.signal});
    const raw=await r.text();let out;try{out=JSON.parse(raw)}catch(_){throw Error(raw.slice(0,180)||`HTTP ${r.status}`)}

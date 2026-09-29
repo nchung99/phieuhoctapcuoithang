@@ -48,7 +48,7 @@ async function callModel(key,model,prompt,ms=10000){
 async function callWithRetry(key,model,prompt){
  let last;
  for(let attempt=0;attempt<2;attempt++){
-  try{return await callModel(key,model,prompt,10000)}
+  try{return await callModel(key,model,prompt,16000)}
   catch(e){
    last=e;
    const status=Number(e?.status||0),k=kind(e?.message||"");
@@ -74,9 +74,9 @@ export default async function handler(req,res){
  if(!data?.hocVien?.length)return res.status(400).json({error:"Không có dữ liệu học viên."});
  if(data.hocVien.length>5)return res.status(400).json({error:"Mỗi request tối đa 5 học viên."});
  const common={tenLop:data.tenLop,thang:data.thang,soBuoi:data.soBuoi,noiDungThang:data.noiDungThang},prompt=promptForBatch(common,data.hocVien,subject);
- const seed=Math.max(0,(Number(req.body?.batch)||1)-1);
- // Tối đa 3 model/request: đủ fallback nhưng vẫn giới hạn thời gian Vercel.
- const tries=[MODELS[seed%MODELS.length],MODELS[(seed+1)%MODELS.length],MODELS[(seed+2)%MODELS.length]];
+ // Mọi batch dùng cùng thứ tự model. Batch 2/3 không được bắt đầu bằng model khác batch 1.
+ // Nếu model đầu lỗi/quota/high-demand thì mới fallback sang model kế tiếp.
+ const tries=[MODELS[0],MODELS[1],MODELS[2]];
  let last="",lastKind="";
  for(let i=0;i<tries.length;i++){
   const model=tries[i];
