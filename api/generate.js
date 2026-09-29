@@ -12,9 +12,12 @@ QUAN TRỌNG VỀ MỨC NHẬN XÉT:
 - Điểm 7–<8: nhận xét cân bằng, dùng các cách nói như "đã nắm được", "cần luyện thêm", "chưa ổn định".
 - Dưới 7: không khen quá mức; nói nhẹ nhàng nhưng đúng mức độ, chỉ rõ nội dung cần củng cố.
 - Không dùng cùng một kiểu khen cho tất cả học viên.
-- Mỗi câu chuyenMon khoảng 14–22 từ, gọn như giáo viên tự ghi nhận xét, không viết thành đoạn văn.
-- Văn phong tự nhiên, gần với cách giáo viên nói với phụ huynh; ưu tiên câu đơn giản, rõ ý.
-- Có thể dùng các cách nói như "Con đã nắm được...", "Con làm được...", "Con còn cần luyện thêm...", "Ở một số bài...", "Khi làm bài...", "Con đôi lúc còn...".
+- Mỗi câu chuyenMon khoảng 18–26 từ: đủ nội dung để phụ huynh hiểu học sinh làm được gì và còn cần cải thiện gì, nhưng không viết lan man.
+- Văn phong tự nhiên, gần với cách giáo viên trực tiếp ghi nhận xét cho phụ huynh; câu rõ ý, không quá trang trọng.
+- TUYỆT ĐỐI không dùng "con", "em", "bé", "học sinh" để gọi người học trong câu nhận xét.
+- Khi cần gọi tên, dùng TÊN ĐỆM + TÊN lấy từ tenHocVien. Ví dụ "Nguyễn Công Hưng" phải gọi là "Công Hưng"; "Trần Minh Anh" gọi là "Minh Anh".
+- Không cần câu nào cũng mở đầu bằng tên. Xen kẽ tên đệm + tên với cách viết trực tiếp như "Khi làm bài...", "Ở các hoạt động...", "Với nội dung này..." để 5 câu không bị lặp.
+- Có thể viết tự nhiên như "Công Hưng đã nắm được...", "Công Hưng làm khá chắc...", "Khi làm bài, Công Hưng còn cần...", "Ở một số nội dung, Công Hưng...".
 - Hạn chế các cụm sáo/khuôn mẫu như "thể hiện khả năng", "cho thấy sự", "phát huy tốt", "vận dụng linh hoạt", "có sự tiến bộ rõ rệt", "tích cực tham gia".
 - Không ép câu nào cũng theo kiểu khen trước rồi mới góp ý. Điểm chưa ổn thì nói nhẹ nhưng thẳng.
 - Tránh nối nhiều vế bằng "đồng thời", "bên cạnh đó", "qua đó"; mỗi câu chỉ 1 ý chính và tối đa 1 ý phụ.
@@ -45,7 +48,8 @@ Trả JSON THUẦN:
 {"students":{"TÊN":{"chuyenMon":["","","","",""],"hocSinhCoThe":"","coCheRobot":"","sanPhamDuAn":"","mucDoHoanThien":"Đúng yêu cầu","diemTieuChi":{"Thái độ & tinh thần học tập":4,"Kỹ năng hợp tác & giao tiếp":4,"Kỹ năng thực hành & sáng tạo":4,"Tính kiên trì & tự giác":4,"Khả năng tiếp thu & vận dụng kiến thức":4,"Tiến bộ cá nhân & đạo đức":4}}}}
 Phải đủ đúng key: ${JSON.stringify(names)}
 THÔNG TIN THÁNG: ${JSON.stringify(common)}
-DỮ LIỆU HỌC VIÊN: ${JSON.stringify(students)}`;
+DỮ LIỆU HỌC VIÊN: ${JSON.stringify(students)}
+Nhắc lại: trong phần nhận xét, nếu nhắc tới học viên thì chỉ dùng 2 từ cuối của tenHocVien (tên đệm + tên), không dùng "con".`;
 }
 async function callModel(key,model,prompt,ms=10000){
  const c=new AbortController(),timer=setTimeout(()=>c.abort(),ms);
