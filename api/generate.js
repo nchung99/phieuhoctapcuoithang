@@ -4,6 +4,7 @@ function promptForBatch(common,students,subject){
  const names=students.map(s=>s.tenHocVien);
  return `Bạn là giáo viên KAPLA viết phiếu đánh giá học tập OIEC THEO THÁNG.
 Đánh giá RIÊNG từng học viên từ dữ liệu thực tế; không trộn dữ liệu học viên. Buổi vắng không phải điểm thấp và không được dùng buổi vắng để bịa thành tích. Không bịa thông tin. Bộ môn: ${subject}.
+Chương trình/Level: ${common.chuongTrinh||"Chưa xác định"}. Công cụ/phần mềm: ${common.congCu||"Chưa xác định"}. Khi nhận xét kỹ năng/sản phẩm, bám đúng công cụ này, không tự đổi sang Scratch hay LEGO SPIKE nếu dữ liệu không phải công cụ đó.
 
 QUAN TRỌNG VỀ MỨC NHẬN XÉT:
 - Phải dựa mạnh vào diemTrungBinh và điểm từng buổi có mặt/đi trễ trong dữ liệu EMS.
@@ -144,7 +145,7 @@ export default async function handler(req,res){
  const data=req.body?.data,subject=req.body?.subject||"Coding / Robotics";
  if(!data?.hocVien?.length)return res.status(400).json({error:"Không có dữ liệu học viên."});
  if(data.hocVien.length>5)return res.status(400).json({error:"Mỗi request tối đa 5 học viên."});
- const common={tenLop:data.tenLop,thang:data.thang,soBuoi:data.soBuoi,noiDungThang:data.noiDungThang},prompt=promptForBatch(common,data.hocVien,subject);
+ const common={tenLop:data.tenLop,thang:data.thang,soBuoi:data.soBuoi,noiDungThang:data.noiDungThang,chuongTrinh:data.__manualProgram||data.chuongTrinh||"",congCu:req.body?.tool||""},prompt=promptForBatch(common,data.hocVien,subject);
  // Mọi batch dùng cùng thứ tự model. Batch 2/3 không được bắt đầu bằng model khác batch 1.
  // Nếu model đầu lỗi/quota/high-demand thì mới fallback sang model kế tiếp.
  const tries=[MODELS[0],MODELS[1],MODELS[2]];

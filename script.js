@@ -27,7 +27,7 @@ function editedDataKey(k){return `oiec_edited_data_${k}`}
 function saveEditedData(k,d){
  if(!k||!d)return;
  localStorage.setItem(editedDataKey(k),JSON.stringify({
-   tenLop:d.tenLop,thang:d.thang,__manualSubject:d.__manualSubject||"",
+   tenLop:d.tenLop,thang:d.thang,__manualSubject:d.__manualSubject||"",__manualProgram:d.__manualProgram||"",chuongTrinh:d.chuongTrinh||"",
    noiDungThang:d.noiDungThang||[],
    hocVien:(d.hocVien||[]).map(x=>({tenHocVien:x.tenHocVien}))
  }));
@@ -37,6 +37,8 @@ function applyEditedData(k,d){
  if(!saved)return d;
  if(saved.thang!=null)d.thang=saved.thang;
  if(saved.__manualSubject)d.__manualSubject=saved.__manualSubject;
+ if(saved.__manualProgram)d.__manualProgram=saved.__manualProgram;
+ if(saved.chuongTrinh)d.chuongTrinh=saved.chuongTrinh;
  if(Array.isArray(saved.noiDungThang))d.noiDungThang=saved.noiDungThang;
  if(Array.isArray(saved.hocVien)){
    saved.hocVien.forEach((x,i)=>{if(d.hocVien?.[i]&&x?.tenHocVien)d.hocVien[i].tenHocVien=x.tenHocVien});
@@ -80,8 +82,37 @@ function syncCurrentClass(){
  loadClassMeta();
  renderStudent();
 }
+const PROGRAM_MAP = [
+ {re:/^RBT\.\s*STAGE\s*[12]$/i,subject:"Robotics",tool:"LEGO Duplo",top1:"Công cụ sử dụng: LEGO Duplo",top2:"Học sinh có thể lắp ráp: Các mô hình theo chủ đề đã học."},
+ {re:/^TINY\s+CODER\s*[12]$/i,subject:"Coding",tool:"Scratch Jr",top1:"Phần mềm sử dụng: Scratch Jr",top2:"Học sinh có thể lập trình: Câu chuyện, hoạt cảnh và trò chơi đơn giản theo chủ đề đã học."},
+ {re:/^ESSENTIAL\s*[1-4]$/i,subject:"Robotics",tool:"LEGO SPIKE Essential",top1:"Công cụ sử dụng: LEGO SPIKE Essential",top2:"Học sinh có thể lắp ráp và lập trình: Các mô hình robot theo chủ đề đã học."},
+ {re:/^PRIME\s*[1-4]$/i,subject:"Robotics",tool:"LEGO SPIKE Prime",top1:"Công cụ sử dụng: LEGO SPIKE Prime",top2:"Học sinh có thể lắp ráp, lập trình và điều khiển: Các mô hình robot theo yêu cầu của bài học."},
+ {re:/^JUNIOR\s+CODER\s*[1-3]$/i,subject:"Coding",tool:"Scratch 3.0",top1:"Phần mềm sử dụng: Scratch 3.0",top2:"Học sinh có thể lập trình: Hoạt cảnh, trò chơi và các sản phẩm theo chủ đề đã học."},
+ {re:/^MINECRAFT\s*[12]$/i,subject:"Coding",tool:"Minecraft Education",top1:"Phần mềm sử dụng: Minecraft Education",top2:"Học sinh có thể lập trình: Xây dựng và hoàn thành các nhiệm vụ trong Minecraft."},
+ {re:/^SENIOR\s+CODER\s*[1-3]$/i,subject:"Coding",tool:"Python",top1:"Ngôn ngữ sử dụng: Python",top2:"Học sinh có thể lập trình: Viết và chạy các chương trình Python theo nội dung đã học."}
+];
+function normalizeProgram(v){return String(v||"").trim().replace(/\s+/g," ")}
+function programFromActivity(v){
+ let x=String(v||"").trim();
+ x=x.replace(/^\s*\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}\s*(?:AM|PM)?\s*:\s*/i,"");
+ x=x.replace(/\s*\([^)]*\)\s*$/i,"");
+ const parts=x.split(/\s+-\s+/).map(t=>t.trim()).filter(Boolean);
+ return normalizeProgram(parts.length>=3?parts.slice(2).join(" - "):(parts.length?parts[parts.length-1]:x));
+}
+function detectedProgram(d=DATA){
+ if(d?.__manualProgram)return normalizeProgram(d.__manualProgram);
+ if(d?.chuongTrinh)return normalizeProgram(d.chuongTrinh);
+ for(const l of (d?.noiDungThang||[])){const p=programFromActivity(l.tenBuoiHoc);if(p)return p}
+ return "";
+}
+function programConfig(d=DATA){
+ const program=detectedProgram(d);
+ const found=PROGRAM_MAP.find(x=>x.re.test(program));
+ return found?{...found,program}:null;
+}
 function subject(){
  if(DATA?.__manualSubject)return DATA.__manualSubject;
+ const mapped=programConfig(DATA);if(mapped)return mapped.subject;
  const lessons=(DATA?.noiDungThang||[]);
  const activity=lessons.map(x=>x.tenBuoiHoc||"").join(" ");
  const content=lessons.map(x=>`${x.tenBaiHoc||""} ${x.noiDungBaiHoc||""}`).join(" ");
@@ -172,14 +203,15 @@ function renderStudent(){
  const [,legacyKBottom]=splitLegacy(a.kienThucLapTrinh);
  const [,legacyRBottom]=splitLegacy(a.kyNangRobotics);
 
- // Hàng 1 là nội dung cố định theo bộ môn, KHÔNG lấy từ AI.
+ // Hàng 1 ưu tiên mapping Chương trình/Level -> Bộ môn + Công cụ.
+ const cfg=programConfig(DATA);
  const isRobotics=sub==="Robotics";
- const kTop=isRobotics
+ const kTop=cfg?.top1||(isRobotics
    ?"Ngôn ngữ/ phần mềm sử dụng: LEGO SPIKE Essential"
-   :"Ngôn ngữ/ phần mềm sử dụng: Scratch";
- const rTop=isRobotics
+   :"Ngôn ngữ/ phần mềm sử dụng: Scratch");
+ const rTop=cfg?.top2||(isRobotics
    ?"Học sinh có thể lắp ráp: Các mô hình robot theo chủ đề đã học."
-   :"Học sinh có thể lập trình: Các sản phẩm/trò chơi theo chủ đề đã học.";
+   :"Học sinh có thể lập trình: Các sản phẩm/trò chơi theo chủ đề đã học.");
 
  // Hàng 2 vẫn cá nhân hóa theo từng học viên bằng AI / chỉnh tay.
  const kBottom=a.hocSinhCoThe||legacyKBottom||"—";
@@ -361,6 +393,7 @@ function openEdit(){
  h+=editField("Tên học viên","student",current)+editField("Lớp","className",DATA.tenLop)+editField("Giáo viên","teacher",selectedTeacher())+editField("Center","center",selectedCenter());
  const currentSubject=subject();
  h+=`<div class="edit-field"><label>Bộ môn</label><select name="subject"><option value="Robotics" ${currentSubject==="Robotics"?"selected":""}>Robotics</option><option value="Coding" ${currentSubject==="Coding"?"selected":""}>Coding</option></select></div>`;
+ h+=editField("Chương trình / Level","program",detectedProgram(DATA));
  h+=editField("Tháng","month",DATA.thang);
  h+='<div class="edit-section">Nội dung học trong tháng</div>';
  (DATA.noiDungThang||[]).forEach((x,i)=>{h+=editField(`Tuần ${i+1} - Ngày học`,`date_${i}`,x.ngayHoc)+editField(`Tuần ${i+1} - Tên bài`,`title_${i}`,x.tenBaiHoc)+editField(`Tuần ${i+1} - Nội dung`,`content_${i}`,x.noiDungBaiHoc,true,true)});
@@ -401,6 +434,7 @@ function saveEdit(){
   DATA.tenLop=String(get("className")||DATA.tenLop).trim();
   DATA.thang=String(get("month")||DATA.thang).trim();
   DATA.__manualSubject=String(get("subject")||"").trim();
+  DATA.__manualProgram=String(get("program")||"").trim();
   (DATA.noiDungThang||[]).forEach((x,i)=>{x.ngayHoc=String(get(`date_${i}`)||"").trim();x.tenBaiHoc=String(get(`title_${i}`)||"").trim();x.noiDungBaiHoc=String(get(`content_${i}`)||"").trim()});
 
   const teacher=String(get("teacher")||"").trim(),center=String(get("center")||"").trim();
@@ -439,6 +473,7 @@ let FAILED_BATCHES=[];
 
 function subjectOfData(d){
  if(d?.__manualSubject)return d.__manualSubject;
+ const mapped=programConfig(d);if(mapped)return mapped.subject;
  const lessons=(d?.noiDungThang||[]);
  const activity=lessons.map(x=>x.tenBuoiHoc||"").join(" ");
  const content=lessons.map(x=>`${x.tenBaiHoc||""} ${x.noiDungBaiHoc||""}`).join(" ");
@@ -473,7 +508,7 @@ async function retryFailedBatch(index,button){
  const old=button?.textContent||"Retry";if(button){button.disabled=true;button.textContent="Đang retry..."}
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),58000);
  try{
-  const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:{...d,hocVien:exactStudents},subject:subjectOfData(d),batch:f.batch}),signal:controller.signal});
+  const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:{...d,hocVien:exactStudents},subject:subjectOfData(d),tool:programConfig(d)?.tool||"",batch:f.batch}),signal:controller.signal});
   const raw=await r.text();let out;try{out=JSON.parse(raw)}catch(_){throw Error(raw.slice(0,180)||`HTTP ${r.status}`)}
   if(!r.ok||out.error)throw Error(out.error||`HTTP ${r.status}`);
   const got=out.students||{},missing=exactStudents.filter(s=>{
@@ -499,7 +534,7 @@ $("#aiBtn").onclick=async()=>{
  async function run(job){
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),58000);
   try{
-   const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:{...job.data,hocVien:job.students},subject:subjectOfData(job.data),batch:job.batch}),signal:controller.signal});
+   const r=await fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({data:{...job.data,hocVien:job.students},subject:subjectOfData(job.data),tool:programConfig(job.data)?.tool||"",batch:job.batch}),signal:controller.signal});
    const raw=await r.text();let out;try{out=JSON.parse(raw)}catch(_){throw Error(raw.slice(0,180)||`HTTP ${r.status}`)}
    if(!r.ok||out.error)throw Error(out.error||`HTTP ${r.status}`);
    const got=out.students||{},missing=job.students.filter(s=>{
