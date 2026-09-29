@@ -103,8 +103,27 @@ function renderStudent(){
  const s=DATA.hocVien.find(x=>x.tenHocVien===current); if(!s)return;
  const sub=subject();
  const baseAI=AI[current]||{};
- const manual=MANUAL[currentClassKey]?.[current]||{};
- const a={...baseAI,...manual,diemTieuChi:{...(baseAI.diemTieuChi||{}),...(manual.diemTieuChi||{})}};
+ const manualRaw=MANUAL[currentClassKey]?.[current]||{};
+
+ // Manual chỉ được đè AI khi thật sự có dữ liệu.
+ // Tránh localStorage cũ chứa chuỗi/mảng rỗng làm mất kết quả AI.
+ const hasManualValue=(v)=>{
+   if(v===undefined||v===null)return false;
+   if(typeof v==="string")return v.trim()!=="";
+   if(Array.isArray(v))return v.some(x=>String(x??"").trim()!=="");
+   return true;
+ };
+ const manual={};
+ for(const [key,val] of Object.entries(manualRaw)){
+   if(key==="diemTieuChi")continue;
+   if(hasManualValue(val))manual[key]=val;
+ }
+ const manualScores={};
+ for(const [key,val] of Object.entries(manualRaw.diemTieuChi||{})){
+   const n=Number(val);
+   if(Number.isFinite(n)&&n>=1&&n<=5)manualScores[key]=n;
+ }
+ const a={...baseAI,...manual,diemTieuChi:{...(baseAI.diemTieuChi||{}),...manualScores}};
  $("#rTeacher").textContent=selectedTeacher()||"—";
  $("#rCenter").textContent=selectedCenter()||"—";
  $("#rStudent").textContent=s.tenHocVien;

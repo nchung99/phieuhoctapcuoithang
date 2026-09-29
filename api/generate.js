@@ -102,24 +102,38 @@ function emsAverage(student){
 }
 function weightedCriteria(student){
  const avg=emsAverage(student);
- // Không có buổi tham gia/không có điểm: không tự chấm tốt. Collector mới sẽ loại bé vắng cả tháng.
+
+ // Không có điểm: giữ mức trung tính, riêng đạo đức luôn 5.
  if(avg===null)return {
-  "Thái độ & tinh thần học tập":null,
-  "Kỹ năng hợp tác & giao tiếp":null,
-  "Kỹ năng thực hành & sáng tạo":null,
-  "Tính kiên trì & tự giác":null,
-  "Khả năng tiếp thu & vận dụng kiến thức":null,
+  "Thái độ & tinh thần học tập":4,
+  "Kỹ năng hợp tác & giao tiếp":4,
+  "Kỹ năng thực hành & sáng tạo":4,
+  "Tính kiên trì & tự giác":4,
+  "Khả năng tiếp thu & vận dụng kiến thức":4,
   "Tiến bộ cá nhân & đạo đức":5
  };
- const base=Math.max(0,Math.min(10,avg))/10*5;
- const score=w=>Math.max(2,Math.min(5,Math.round(base*w)));
+
+ // Mặt bằng mới: không còn tụt xuống 2.
+ // EMS 9–10 => chủ yếu 4–5; EMS 8 => quanh 4; EMS 7 => 3–4.
+ const base=avg>=9.5?4.8:avg>=8.5?4.45:avg>=7.5?4.05:avg>=6.5?3.65:3.35;
+
+ // Biến thiên ổn định theo từng học viên để các bé cùng lớp không ra y hệt nhau.
+ // Không dùng random nên generate lại vẫn giữ profile điểm hợp lý.
+ let seed=2166136261;
+ for(const ch of String(student?.tenHocVien||"")){
+  seed^=ch.codePointAt(0);
+  seed=Math.imul(seed,16777619)>>>0;
+ }
+ const delta=i=>(((seed>>>(i*5))%3)-1)*0.38; // -0.38 / 0 / +0.38
+ const clamp=n=>Math.max(3,Math.min(5,Math.round(n)));
+
  return {
-  "Thái độ & tinh thần học tập":score(0.90),
-  "Kỹ năng hợp tác & giao tiếp":score(0.85),
-  "Kỹ năng thực hành & sáng tạo":score(0.70),
-  "Tính kiên trì & tự giác":score(0.90),
-  "Khả năng tiếp thu & vận dụng kiến thức":score(0.95),
-  // Theo yêu cầu: mục đạo đức luôn hiển thị mức tối đa.
+  "Thái độ & tinh thần học tập":clamp(base+0.15+delta(0)),
+  "Kỹ năng hợp tác & giao tiếp":clamp(base+delta(1)),
+  "Kỹ năng thực hành & sáng tạo":clamp(base-0.20+delta(2)),
+  "Tính kiên trì & tự giác":clamp(base+0.10+delta(3)),
+  "Khả năng tiếp thu & vận dụng kiến thức":clamp(base+0.20+delta(4)),
+  // Theo yêu cầu: đạo đức mặc định luôn 5.
   "Tiến bộ cá nhân & đạo đức":5
  };
 }
