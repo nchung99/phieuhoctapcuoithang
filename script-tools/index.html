@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KAPLA Script Tools</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f3f6f9;margin:0;color:#182230}.wrap{max-width:760px;margin:60px auto;padding:20px}
+.card{background:#fff;border:1px solid #dce3ea;border-radius:14px;padding:22px;box-shadow:0 8px 28px #00000010}
+h1{font-size:22px;margin:0 0 8px}.muted{color:#64748b;margin-bottom:22px}.tool{display:flex;gap:16px;align-items:center;justify-content:space-between;border-top:1px solid #e7edf3;padding-top:18px}
+.tool h2{font-size:16px;margin:0 0 5px}.tool p{font-size:13px;color:#64748b;margin:0}
+button{border:0;border-radius:8px;background:#d71920;color:white;font-weight:700;padding:11px 16px;cursor:pointer;white-space:nowrap}
+button:disabled{opacity:.65}.back{display:inline-block;margin-top:16px;color:#334155;text-decoration:none;font-size:13px}
+</style></head><body><div class="wrap"><div class="card">
+<h1>KAPLA Script Tools</h1><div class="muted">Script hỗ trợ lấy dữ liệu cho OIEC Monthly Report.</div>
+<div class="tool"><div><h2>OIEC Monthly Collector</h2><p>Mở buổi mới nhất trên EMS → F12 → Console → paste script.</p></div><button id="copy">📋 Copy Script</button></div>
+<a class="back" href="../index.html">← Quay lại OIEC Monthly Report</a>
+</div></div><script>
+document.getElementById("copy").onclick=async function(){
+ const b=this,old=b.textContent;
+ try{
+  const r=await fetch("oiec-monthly-collector.js",{cache:"no-store"});
+  if(!r.ok)throw Error("Không tải được script");
+  const t=await r.text();
+  await navigator.clipboard.writeText(t);
+  b.textContent="✓ Đã copy";
+  setTimeout(()=>b.textContent=old,1600);
+ }catch(e){b.textContent="Copy lỗi";setTimeout(()=>b.textContent=old,1600)}
+};
+</script></body></html>
